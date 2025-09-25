@@ -1,0 +1,518 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "13.0.5"
+  }
+  public: {
+    Tables: {
+      chats: {
+        Row: {
+          course: string | null
+          created_at: string
+          id: string
+          last_message_at: string | null
+          member_ids: string[]
+          name: string | null
+          type: string
+        }
+        Insert: {
+          course?: string | null
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          member_ids: string[]
+          name?: string | null
+          type?: string
+        }
+        Update: {
+          course?: string | null
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          member_ids?: string[]
+          name?: string | null
+          type?: string
+        }
+        Relationships: []
+      }
+      courses: {
+        Row: {
+          code: string
+          created_at: string
+          name: string
+          university: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          name: string
+          university: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          name?: string
+          university?: string
+        }
+        Relationships: []
+      }
+      documents: {
+        Row: {
+          course: string
+          created_at: string
+          description: string | null
+          file_size: number
+          id: string
+          likes: number | null
+          mime_type: string
+          storage_path: string
+          tags: string[] | null
+          title: string
+          uploader_id: string
+          version: number | null
+          views: number | null
+        }
+        Insert: {
+          course: string
+          created_at?: string
+          description?: string | null
+          file_size: number
+          id?: string
+          likes?: number | null
+          mime_type: string
+          storage_path: string
+          tags?: string[] | null
+          title: string
+          uploader_id: string
+          version?: number | null
+          views?: number | null
+        }
+        Update: {
+          course?: string
+          created_at?: string
+          description?: string | null
+          file_size?: number
+          id?: string
+          likes?: number | null
+          mime_type?: string
+          storage_path?: string
+          tags?: string[] | null
+          title?: string
+          uploader_id?: string
+          version?: number | null
+          views?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_uploader_id_fkey"
+            columns: ["uploader_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      matches: {
+        Row: {
+          created_at: string
+          id: string
+          status: string
+          user_a: string
+          user_b: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          status?: string
+          user_a: string
+          user_b: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          status?: string
+          user_a?: string
+          user_b?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matches_user_a_fkey"
+            columns: ["user_a"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "matches_user_b_fkey"
+            columns: ["user_b"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          attachments: Json | null
+          chat_id: string
+          created_at: string
+          id: string
+          read_by: string[] | null
+          sender_id: string
+          text: string | null
+        }
+        Insert: {
+          attachments?: Json | null
+          chat_id: string
+          created_at?: string
+          id?: string
+          read_by?: string[] | null
+          sender_id: string
+          text?: string | null
+        }
+        Update: {
+          attachments?: Json | null
+          chat_id?: string
+          created_at?: string
+          id?: string
+          read_by?: string[] | null
+          sender_id?: string
+          text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          availability: Json | null
+          bio: string | null
+          courses: string[] | null
+          created_at: string
+          discoverable: boolean | null
+          email: string
+          geo_lat: number | null
+          geo_lng: number | null
+          geo_updated_at: string | null
+          id: string
+          languages: string[] | null
+          major: string
+          name: string
+          photo_url: string | null
+          preferred_locations: string[] | null
+          reliability_score: number | null
+          roles: string[] | null
+          show_last_seen: boolean | null
+          show_online: boolean | null
+          university: string
+          updated_at: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          availability?: Json | null
+          bio?: string | null
+          courses?: string[] | null
+          created_at?: string
+          discoverable?: boolean | null
+          email: string
+          geo_lat?: number | null
+          geo_lng?: number | null
+          geo_updated_at?: string | null
+          id?: string
+          languages?: string[] | null
+          major: string
+          name: string
+          photo_url?: string | null
+          preferred_locations?: string[] | null
+          reliability_score?: number | null
+          roles?: string[] | null
+          show_last_seen?: boolean | null
+          show_online?: boolean | null
+          university: string
+          updated_at?: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          availability?: Json | null
+          bio?: string | null
+          courses?: string[] | null
+          created_at?: string
+          discoverable?: boolean | null
+          email?: string
+          geo_lat?: number | null
+          geo_lng?: number | null
+          geo_updated_at?: string | null
+          id?: string
+          languages?: string[] | null
+          major?: string
+          name?: string
+          photo_url?: string | null
+          preferred_locations?: string[] | null
+          reliability_score?: number | null
+          roles?: string[] | null
+          show_last_seen?: boolean | null
+          show_online?: boolean | null
+          university?: string
+          updated_at?: string
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          created_at: string
+          id: string
+          reason: string
+          reporter_id: string
+          status: string
+          target_id: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reason: string
+          reporter_id: string
+          status?: string
+          target_id: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reason?: string
+          reporter_id?: string
+          status?: string
+          target_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          chat_id: string
+          created_at: string
+          creator_id: string
+          duration_min: number
+          geo_lat: number | null
+          geo_lng: number | null
+          id: string
+          place_name: string | null
+          status: string
+          title: string
+          when_scheduled: string
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string
+          creator_id: string
+          duration_min?: number
+          geo_lat?: number | null
+          geo_lng?: number | null
+          id?: string
+          place_name?: string | null
+          status?: string
+          title?: string
+          when_scheduled: string
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string
+          creator_id?: string
+          duration_min?: number
+          geo_lat?: number | null
+          geo_lng?: number | null
+          id?: string
+          place_name?: string | null
+          status?: string
+          title?: string
+          when_scheduled?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const
