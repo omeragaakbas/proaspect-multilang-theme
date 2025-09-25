@@ -44,6 +44,45 @@ export type Database = {
         }
         Relationships: []
       }
+      clients: {
+        Row: {
+          address_json: Json | null
+          archived: boolean
+          billing_email: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contractor_id: string
+          created_at: string
+          id: string
+          name_i18n: Json
+          updated_at: string
+        }
+        Insert: {
+          address_json?: Json | null
+          archived?: boolean
+          billing_email?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contractor_id: string
+          created_at?: string
+          id?: string
+          name_i18n?: Json
+          updated_at?: string
+        }
+        Update: {
+          address_json?: Json | null
+          archived?: boolean
+          billing_email?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          name_i18n?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contractor_profiles: {
         Row: {
           address_json: Json | null
@@ -337,6 +376,91 @@ export type Database = {
         }
         Relationships: []
       }
+      project_view_prefs: {
+        Row: {
+          created_at: string
+          id: string
+          locale: Database["public"]["Enums"]["locale"]
+          project_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          locale: Database["public"]["Enums"]["locale"]
+          project_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          locale?: Database["public"]["Enums"]["locale"]
+          project_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_view_prefs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          archived: boolean
+          client_id: string
+          code: string | null
+          contractor_id: string
+          created_at: string
+          description_i18n: Json | null
+          hourly_rate: number | null
+          id: string
+          name_i18n: Json
+          po_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          client_id: string
+          code?: string | null
+          contractor_id: string
+          created_at?: string
+          description_i18n?: Json | null
+          hourly_rate?: number | null
+          id?: string
+          name_i18n?: Json
+          po_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          client_id?: string
+          code?: string | null
+          contractor_id?: string
+          created_at?: string
+          description_i18n?: Json | null
+          hourly_rate?: number | null
+          id?: string
+          name_i18n?: Json
+          po_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reports: {
         Row: {
           created_at: string
@@ -429,6 +553,71 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      time_entries: {
+        Row: {
+          approved_at: string | null
+          attachments: Json | null
+          contractor_id: string
+          created_at: string
+          date: string
+          description: string | null
+          end_time: string | null
+          hours: number
+          id: string
+          project_id: string
+          rejected_at: string | null
+          rejection_reason: string | null
+          start_time: string | null
+          status: string
+          submitted_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          attachments?: Json | null
+          contractor_id: string
+          created_at?: string
+          date: string
+          description?: string | null
+          end_time?: string | null
+          hours: number
+          id?: string
+          project_id: string
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          start_time?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          attachments?: Json | null
+          contractor_id?: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          end_time?: string | null
+          hours?: number
+          id?: string
+          project_id?: string
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          start_time?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
           },
         ]
       }
