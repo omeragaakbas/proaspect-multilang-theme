@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_settings: {
+        Row: {
+          company_logo_url: string | null
+          contractor_id: string
+          created_at: string
+          default_payment_terms: string | null
+          default_vat_rate: number | null
+          id: string
+          invoice_prefix: string | null
+          invoice_template_settings: Json | null
+          next_invoice_number: number | null
+          updated_at: string
+        }
+        Insert: {
+          company_logo_url?: string | null
+          contractor_id: string
+          created_at?: string
+          default_payment_terms?: string | null
+          default_vat_rate?: number | null
+          id?: string
+          invoice_prefix?: string | null
+          invoice_template_settings?: Json | null
+          next_invoice_number?: number | null
+          updated_at?: string
+        }
+        Update: {
+          company_logo_url?: string | null
+          contractor_id?: string
+          created_at?: string
+          default_payment_terms?: string | null
+          default_vat_rate?: number | null
+          id?: string
+          invoice_prefix?: string | null
+          invoice_template_settings?: Json | null
+          next_invoice_number?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chats: {
         Row: {
           course: string | null
@@ -205,6 +244,134 @@ export type Database = {
           },
         ]
       }
+      invoice_line_items: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          quantity: number
+          time_entry_id: string | null
+          total_cents: number
+          unit_price_cents: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          invoice_id: string
+          quantity: number
+          time_entry_id?: string | null
+          total_cents: number
+          unit_price_cents: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          quantity?: number
+          time_entry_id?: string | null
+          total_cents?: number
+          unit_price_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_line_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_line_items_time_entry_id_fkey"
+            columns: ["time_entry_id"]
+            isOneToOne: false
+            referencedRelation: "time_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          client_id: string
+          contractor_id: string
+          created_at: string
+          currency: string
+          due_date: string
+          id: string
+          invoice_number: string
+          issue_date: string
+          notes: string | null
+          paid_at: string | null
+          payment_terms: string | null
+          pdf_url: string | null
+          sent_at: string | null
+          status: string
+          subtotal_cents: number
+          total_cents: number
+          ubl_url: string | null
+          updated_at: string
+          vat_amount_cents: number
+          vat_rate: number
+          viewed_at: string | null
+        }
+        Insert: {
+          client_id: string
+          contractor_id: string
+          created_at?: string
+          currency?: string
+          due_date: string
+          id?: string
+          invoice_number: string
+          issue_date?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_terms?: string | null
+          pdf_url?: string | null
+          sent_at?: string | null
+          status?: string
+          subtotal_cents?: number
+          total_cents?: number
+          ubl_url?: string | null
+          updated_at?: string
+          vat_amount_cents?: number
+          vat_rate?: number
+          viewed_at?: string | null
+        }
+        Update: {
+          client_id?: string
+          contractor_id?: string
+          created_at?: string
+          currency?: string
+          due_date?: string
+          id?: string
+          invoice_number?: string
+          issue_date?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_terms?: string | null
+          pdf_url?: string | null
+          sent_at?: string | null
+          status?: string
+          subtotal_cents?: number
+          total_cents?: number
+          ubl_url?: string | null
+          updated_at?: string
+          vat_amount_cents?: number
+          vat_rate?: number
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       matches: {
         Row: {
           created_at: string
@@ -288,6 +455,42 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      notifications: {
+        Row: {
+          action_url: string | null
+          created_at: string
+          id: string
+          message: string
+          metadata: Json | null
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          read?: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -626,7 +829,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_invoice_number: {
+        Args: { contractor_uuid: string }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "ADMIN" | "CONTRACTOR"
