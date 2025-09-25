@@ -159,6 +159,10 @@
     background: var(--gradient-hero);
   }
 
+  .gradient-subtle {
+    background: var(--gradient-subtle);
+  }
+
   .shadow-primary {
     box-shadow: var(--shadow-primary);
   }

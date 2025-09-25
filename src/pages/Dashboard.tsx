@@ -60,7 +60,7 @@ const Dashboard = () => {
             variant="hero" 
             className="h-auto p-4" 
             size="lg"
-            onClick={() => navigate('/dashboard/time-entry')}
+            onClick={() => navigate('/dashboard/time')}
           >
             <div className="flex items-center gap-3">
               <Plus className="h-5 w-5" />

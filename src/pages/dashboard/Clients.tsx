@@ -25,6 +25,7 @@ import {
   Edit,
   Archive
 } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -103,9 +104,49 @@ const Clients = () => {
                         Voeg een nieuwe klant toe aan je portfolio
                       </DialogDescription>
                     </DialogHeader>
-                    {/* Add client form will go here */}
-                    <div className="text-center py-8 text-muted-foreground">
-                      Klant formulier komt hier...
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="clientName">Bedrijfsnaam *</Label>
+                          <Input id="clientName" placeholder="ACME Corporation" required />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="contactName">Contactpersoon</Label>
+                          <Input id="contactName" placeholder="John Doe" />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="contactEmail">E-mailadres</Label>
+                          <Input id="contactEmail" type="email" placeholder="john@acme.com" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="billingEmail">Factuur e-mail</Label>
+                          <Input id="billingEmail" type="email" placeholder="billing@acme.com" />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="address">Adres</Label>
+                        <div className="space-y-2">
+                          <Input placeholder="Straatnaam 123" />
+                          <div className="grid grid-cols-2 gap-2">
+                            <Input placeholder="1234AB" />
+                            <Input placeholder="Amsterdam" />
+                          </div>
+                          <Input placeholder="Nederland" />
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button variant="outline" className="flex-1" type="button">
+                          Annuleren
+                        </Button>
+                        <Button variant="hero" className="flex-1" type="submit">
+                          Klant toevoegen
+                        </Button>
+                      </div>
                     </div>
                   </DialogContent>
                 </Dialog>
