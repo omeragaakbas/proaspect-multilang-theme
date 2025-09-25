@@ -44,6 +44,51 @@ export type Database = {
         }
         Relationships: []
       }
+      contractor_profiles: {
+        Row: {
+          address_json: Json | null
+          company_name: string
+          created_at: string
+          default_hourly_rate: number
+          iban: string | null
+          id: string
+          invoice_prefix: string | null
+          kvk: string | null
+          timezone: string
+          updated_at: string
+          user_id: string
+          vat_number: string | null
+        }
+        Insert: {
+          address_json?: Json | null
+          company_name: string
+          created_at?: string
+          default_hourly_rate?: number
+          iban?: string | null
+          id?: string
+          invoice_prefix?: string | null
+          kvk?: string | null
+          timezone?: string
+          updated_at?: string
+          user_id: string
+          vat_number?: string | null
+        }
+        Update: {
+          address_json?: Json | null
+          company_name?: string
+          created_at?: string
+          default_hourly_rate?: number
+          iban?: string | null
+          id?: string
+          invoice_prefix?: string | null
+          kvk?: string | null
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+          vat_number?: string | null
+        }
+        Relationships: []
+      }
       courses: {
         Row: {
           code: string
@@ -221,11 +266,14 @@ export type Database = {
           major: string
           name: string
           photo_url: string | null
+          preferred_locale: Database["public"]["Enums"]["locale"] | null
           preferred_locations: string[] | null
           reliability_score: number | null
+          role: Database["public"]["Enums"]["app_role"] | null
           roles: string[] | null
           show_last_seen: boolean | null
           show_online: boolean | null
+          ui_theme: Database["public"]["Enums"]["ui_theme"] | null
           university: string
           updated_at: string
           user_id: string
@@ -246,11 +294,14 @@ export type Database = {
           major: string
           name: string
           photo_url?: string | null
+          preferred_locale?: Database["public"]["Enums"]["locale"] | null
           preferred_locations?: string[] | null
           reliability_score?: number | null
+          role?: Database["public"]["Enums"]["app_role"] | null
           roles?: string[] | null
           show_last_seen?: boolean | null
           show_online?: boolean | null
+          ui_theme?: Database["public"]["Enums"]["ui_theme"] | null
           university: string
           updated_at?: string
           user_id: string
@@ -271,11 +322,14 @@ export type Database = {
           major?: string
           name?: string
           photo_url?: string | null
+          preferred_locale?: Database["public"]["Enums"]["locale"] | null
           preferred_locations?: string[] | null
           reliability_score?: number | null
+          role?: Database["public"]["Enums"]["app_role"] | null
           roles?: string[] | null
           show_last_seen?: boolean | null
           show_online?: boolean | null
+          ui_theme?: Database["public"]["Enums"]["ui_theme"] | null
           university?: string
           updated_at?: string
           user_id?: string
@@ -386,7 +440,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      app_role: "ADMIN" | "CONTRACTOR"
+      locale: "nl" | "en" | "tr"
+      ui_theme: "LIGHT" | "DARK" | "SYSTEM"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -513,6 +569,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["ADMIN", "CONTRACTOR"],
+      locale: ["nl", "en", "tr"],
+      ui_theme: ["LIGHT", "DARK", "SYSTEM"],
+    },
   },
 } as const

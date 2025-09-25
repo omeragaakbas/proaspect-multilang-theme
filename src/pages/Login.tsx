@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Header } from '@/components/Layout/Header';
 import { Footer } from '@/components/Footer/Footer';
 import { Button } from '@/components/ui/button';
@@ -6,9 +7,43 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Mail, Lock, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 const Login = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const { signIn } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const message = location.state?.message;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    if (!email || !password) {
+      setError('Vul alle velden in');
+      setLoading(false);
+      return;
+    }
+
+    const { error } = await signIn(email, password);
+
+    setLoading(false);
+
+    if (error) {
+      setError(error.message);
+    } else {
+      navigate('/dashboard');
+    }
+  };
+
   return (
     <div className="min-h-screen">
       <Header />
@@ -21,7 +56,21 @@ const Login = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <form className="space-y-4">
+            {message && (
+              <Alert>
+                <CheckCircle className="h-4 w-4" />
+                <AlertDescription>{message}</AlertDescription>
+              </Alert>
+            )}
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">E-mailadres</Label>
                 <div className="relative">
@@ -31,6 +80,9 @@ const Login = () => {
                     type="email" 
                     placeholder="naam@bedrijf.nl"
                     className="pl-10"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
                   />
                 </div>
               </div>
@@ -43,12 +95,20 @@ const Login = () => {
                     id="password" 
                     type="password"
                     className="pl-10"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
                   />
                 </div>
               </div>
 
-              <Button variant="hero" className="w-full" type="submit">
-                Inloggen
+              <Button 
+                variant="hero" 
+                className="w-full" 
+                type="submit"
+                disabled={loading}
+              >
+                {loading ? 'Bezig met inloggen...' : 'Inloggen'}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </form>
@@ -63,9 +123,9 @@ const Login = () => {
 
             <div className="text-center text-sm text-muted-foreground">
               Nog geen account?{' '}
-              <a href="#" className="text-primary hover:underline">
+              <Link to="/register" className="text-primary hover:underline">
                 Start gratis proefperiode
-              </a>
+              </Link>
             </div>
           </CardContent>
         </Card>
