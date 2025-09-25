@@ -1,9 +1,13 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { 
   Clock, 
   Euro, 
@@ -12,10 +16,35 @@ import {
   TrendingUp, 
   Calendar,
   Plus,
-  ArrowUpRight 
+  ArrowUpRight,
+  Loader2
 } from 'lucide-react';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  const { analytics, timeAnalytics, loading } = useAnalytics();
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('nl-NL', {
+      style: 'currency',
+      currency: 'EUR'
+    }).format(amount);
+  };
+
+  const formatHours = (hours: number) => {
+    const h = Math.floor(hours);
+    const m = Math.round((hours - h) * 60);
+    return m > 0 ? `${h}u ${m}m` : `${h}u`;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-subtle flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-subtle">
       <Header />
@@ -27,7 +56,12 @@ const Dashboard = () => {
 
         {/* Quick Actions */}
         <div className="grid md:grid-cols-4 gap-4 mb-8">
-          <Button variant="hero" className="h-auto p-4" size="lg">
+          <Button 
+            variant="hero" 
+            className="h-auto p-4" 
+            size="lg"
+            onClick={() => navigate('/dashboard/time-entry')}
+          >
             <div className="flex items-center gap-3">
               <Plus className="h-5 w-5" />
               <div className="text-left">
@@ -37,7 +71,12 @@ const Dashboard = () => {
             </div>
           </Button>
           
-          <Button variant="outline" className="h-auto p-4" size="lg">
+          <Button 
+            variant="outline" 
+            className="h-auto p-4" 
+            size="lg"
+            onClick={() => navigate('/dashboard/invoices')}
+          >
             <div className="flex items-center gap-3">
               <FileText className="h-5 w-5" />
               <div className="text-left">
@@ -47,7 +86,12 @@ const Dashboard = () => {
             </div>
           </Button>
 
-          <Button variant="outline" className="h-auto p-4" size="lg">
+          <Button 
+            variant="outline" 
+            className="h-auto p-4" 
+            size="lg"
+            onClick={() => navigate('/dashboard/clients')}
+          >
             <div className="flex items-center gap-3">
               <Users className="h-5 w-5" />
               <div className="text-left">
@@ -57,11 +101,16 @@ const Dashboard = () => {
             </div>
           </Button>
 
-          <Button variant="outline" className="h-auto p-4" size="lg">
+          <Button 
+            variant="outline" 
+            className="h-auto p-4" 
+            size="lg"
+            onClick={() => navigate('/dashboard/reports')}
+          >
             <div className="flex items-center gap-3">
               <Calendar className="h-5 w-5" />
               <div className="text-left">
-                <div className="font-semibold">Planning</div>
+                <div className="font-semibold">Rapporten</div>
                 <div className="text-xs text-muted-foreground">Bekijken</div>
               </div>
             </div>
@@ -72,27 +121,34 @@ const Dashboard = () => {
         <div className="grid md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Deze Week</CardTitle>
+              <CardTitle className="text-sm font-medium">Totaal Uren</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">32.5u</div>
+              <div className="text-2xl font-bold">
+                {analytics ? formatHours(analytics.totalHours) : '0u'}
+              </div>
               <p className="text-xs text-muted-foreground">
-                +2.5u van vorige week
+                Deze periode
               </p>
-              <Progress value={65} className="mt-2" />
+              <Progress 
+                value={analytics ? Math.min((analytics.totalHours / 160) * 100, 100) : 0} 
+                className="mt-2" 
+              />
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Te Factureren</CardTitle>
+              <CardTitle className="text-sm font-medium">Totaal Omzet</CardTitle>
               <Euro className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">€2,340</div>
+              <div className="text-2xl font-bold">
+                {analytics ? formatCurrency(analytics.totalRevenue) : '€0'}
+              </div>
               <p className="text-xs text-success">
-                +€420 deze week
+                {analytics ? formatCurrency(analytics.averageHourlyRate) : '€0'}/uur gemiddeld
               </p>
             </CardContent>
           </Card>
@@ -103,26 +159,109 @@ const Dashboard = () => {
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">3</div>
+              <div className="text-2xl font-bold">
+                {analytics ? analytics.totalInvoices - analytics.paidInvoices : 0}
+              </div>
               <p className="text-xs text-warning">
-                €1,850 totaal
+                {analytics ? formatCurrency(analytics.outstandingAmount) : '€0'} totaal
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Actieve Projecten</CardTitle>
+              <CardTitle className="text-sm font-medium">Facturen Betaald</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">5</div>
+              <div className="text-2xl font-bold">
+                {analytics ? analytics.paidInvoices : 0}
+              </div>
               <p className="text-xs text-muted-foreground">
-                2 nieuwe deze maand
+                van {analytics ? analytics.totalInvoices : 0} totaal
               </p>
             </CardContent>
           </Card>
         </div>
+
+        {/* Charts Section */}
+        {timeAnalytics && timeAnalytics.dailyHours.length > 0 && (
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>Uren per Dag</CardTitle>
+                <CardDescription>
+                  Dagelijkse tijdsregistratie trend
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer
+                  config={{
+                    hours: {
+                      label: "Uren",
+                      color: "hsl(var(--primary))",
+                    },
+                  }}
+                  className="h-[200px]"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={timeAnalytics.dailyHours}>
+                      <XAxis 
+                        dataKey="date" 
+                        tickFormatter={(value) => new Date(value).toLocaleDateString('nl-NL', { month: 'short', day: 'numeric' })}
+                      />
+                      <YAxis />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="hours" 
+                        stroke="hsl(var(--primary))" 
+                        strokeWidth={2}
+                        dot={{ fill: "hsl(var(--primary))" }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Omzet per Dag</CardTitle>
+                <CardDescription>
+                  Dagelijkse omzet ontwikkeling
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer
+                  config={{
+                    revenue: {
+                      label: "Omzet",
+                      color: "hsl(var(--success))",
+                    },
+                  }}
+                  className="h-[200px]"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={timeAnalytics.dailyHours}>
+                      <XAxis 
+                        dataKey="date" 
+                        tickFormatter={(value) => new Date(value).toLocaleDateString('nl-NL', { month: 'short', day: 'numeric' })}
+                      />
+                      <YAxis />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar 
+                        dataKey="revenue" 
+                        fill="hsl(var(--success))" 
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         <div className="grid md:grid-cols-2 gap-6">
           {/* Recent Time Entries */}

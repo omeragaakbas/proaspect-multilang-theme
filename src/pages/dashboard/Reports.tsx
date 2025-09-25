@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import React, { useState, useEffect } from 'react';
+import { format, startOfMonth, endOfMonth, subMonths, startOfWeek, endOfWeek, startOfYear, endOfYear } from 'date-fns';
 import { nl } from 'date-fns/locale';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/dashboard/AppSidebar';
@@ -10,6 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -20,7 +23,8 @@ import {
   Euro,
   Users,
   FileText,
-  PieChart
+  PieChart,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -29,41 +33,74 @@ const Reports = () => {
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();
 
-  // Mock data - will be replaced with real data from Supabase
-  const currentMonth = new Date();
-  const lastMonth = subMonths(currentMonth, 1);
-
-  const stats = {
-    totalHours: 156.5,
-    totalRevenue: 7825.00,
-    totalInvoices: 8,
-    averageHourlyRate: 50.00,
-    paidInvoices: 6,
-    outstandingAmount: 2340.00,
-    topClient: 'ACME Corporation',
-    topProject: 'Website Redesign'
+  // Calculate date ranges based on selected period
+  const getDateRange = () => {
+    const now = new Date();
+    
+    switch (selectedPeriod) {
+      case 'thisMonth':
+        return { start: startOfMonth(now), end: endOfMonth(now) };
+      case 'lastMonth':
+        const lastMonth = subMonths(now, 1);
+        return { start: startOfMonth(lastMonth), end: endOfMonth(lastMonth) };
+      case 'thisQuarter':
+        // Simplified - just use last 3 months
+        return { start: subMonths(startOfMonth(now), 2), end: endOfMonth(now) };
+      case 'thisYear':
+        return { start: startOfYear(now), end: endOfYear(now) };
+      case 'custom':
+        return { start: dateFrom, end: dateTo };
+      default:
+        return { start: startOfMonth(now), end: endOfMonth(now) };
+    }
   };
 
-  const monthlyComparison = {
-    hoursChange: 12.5,
-    revenueChange: 890.00,
-    invoicesChange: 2
+  const { start: periodStart, end: periodEnd } = getDateRange();
+  const { analytics, timeAnalytics, clientAnalytics, loading } = useAnalytics(periodStart, periodEnd);
+  const exportData = async () => {
+    if (!analytics) return;
+    
+    const exportContent = `Rapport - ${format(periodStart || new Date(), 'PPP', { locale: nl })} tot ${format(periodEnd || new Date(), 'PPP', { locale: nl })}
+
+Overzicht:
+- Totaal uren: ${formatHours(analytics.totalHours)}
+- Totaal omzet: ${formatCurrency(analytics.totalRevenue)}
+- Gemiddeld uurtarief: ${formatCurrency(analytics.averageHourlyRate)}
+- Facturen: ${analytics.totalInvoices} (${analytics.paidInvoices} betaald)
+- Openstaand: ${formatCurrency(analytics.outstandingAmount)}
+
+Beste klant: ${analytics.topClient || 'Geen data'}
+Populairste project: ${analytics.topProject || 'Geen data'}
+
+Klanten breakdown:
+${clientAnalytics.map(client => `- ${client.name}: ${formatHours(client.hours)} (${formatCurrency(client.revenue)})`).join('\n')}
+`;
+
+    const blob = new Blob([exportContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rapport-${format(new Date(), 'yyyy-MM-dd')}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
-  const clientBreakdown = [
-    { name: 'ACME Corporation', hours: 45.5, revenue: 2275.00, percentage: 29 },
-    { name: 'TechStart BV', hours: 38.0, revenue: 1900.00, percentage: 24 },
-    { name: 'Digital Solutions', hours: 32.5, revenue: 1625.00, percentage: 21 },
-    { name: 'StartupXYZ', hours: 25.0, revenue: 1250.00, percentage: 16 },
-    { name: 'Anderen', hours: 15.5, revenue: 775.00, percentage: 10 }
-  ];
+  const COLORS = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--info))', 'hsl(var(--muted-foreground))'];
 
-  const projectPerformance = [
-    { name: 'Website Redesign', client: 'ACME Corp', hours: 45.5, revenue: 2275.00, status: 'Actief' },
-    { name: 'API Development', client: 'TechStart BV', hours: 38.0, revenue: 1900.00, status: 'Voltooid' },
-    { name: 'Mobile App', client: 'StartupXYZ', hours: 25.0, revenue: 1250.00, status: 'Actief' },
-    { name: 'Database Optimization', client: 'Digital Solutions', hours: 32.5, revenue: 1625.00, status: 'Voltooid' }
-  ];
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <SidebarProvider>
+          <div className="flex min-h-screen w-full">
+            <AppSidebar />
+            <main className="flex-1 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </main>
+          </div>
+        </SidebarProvider>
+      </DashboardLayout>
+    );
+  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('nl-NL', {
@@ -108,7 +145,7 @@ const Reports = () => {
                       <SelectItem value="custom">Aangepaste periode</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Button variant="outline" className="gap-2">
+                  <Button variant="outline" className="gap-2" onClick={exportData}>
                     <Download className="h-4 w-4" />
                     Exporteren
                   </Button>
@@ -185,10 +222,11 @@ const Reports = () => {
                     <Clock className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{formatHours(stats.totalHours)}</div>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <TrendingUp className="h-3 w-3 text-green-500" />
-                      +{formatHours(monthlyComparison.hoursChange)} vs vorige maand
+                    <div className="text-2xl font-bold">
+                      {analytics ? formatHours(analytics.totalHours) : '0u'}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Geselecteerde periode
                     </p>
                   </CardContent>
                 </Card>
@@ -199,10 +237,11 @@ const Reports = () => {
                     <Euro className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{formatCurrency(stats.totalRevenue)}</div>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <TrendingUp className="h-3 w-3 text-green-500" />
-                      +{formatCurrency(monthlyComparison.revenueChange)} vs vorige maand
+                    <div className="text-2xl font-bold">
+                      {analytics ? formatCurrency(analytics.totalRevenue) : '€0'}
+                    </div>
+                    <p className="text-xs text-success">
+                      {analytics ? formatCurrency(analytics.averageHourlyRate) : '€0'} gem. uurtarief
                     </p>
                   </CardContent>
                 </Card>
@@ -213,9 +252,11 @@ const Reports = () => {
                     <FileText className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{stats.totalInvoices}</div>
+                    <div className="text-2xl font-bold">
+                      {analytics ? analytics.totalInvoices : 0}
+                    </div>
                     <p className="text-xs text-muted-foreground">
-                      {stats.paidInvoices} betaald • {formatCurrency(stats.outstandingAmount)} openstaand
+                      {analytics ? analytics.paidInvoices : 0} betaald • {analytics ? formatCurrency(analytics.outstandingAmount) : '€0'} openstaand
                     </p>
                   </CardContent>
                 </Card>
@@ -226,7 +267,9 @@ const Reports = () => {
                     <BarChart3 className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{formatCurrency(stats.averageHourlyRate)}</div>
+                    <div className="text-2xl font-bold">
+                      {analytics ? formatCurrency(analytics.averageHourlyRate) : '€0'}
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       Gebaseerd op alle projecten
                     </p>
@@ -248,26 +291,69 @@ const Reports = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      {clientBreakdown.map((client, index) => (
-                        <div key={index} className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="font-medium">{client.name}</span>
-                            <span>{client.percentage}%</span>
-                          </div>
-                          <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <span>{formatHours(client.hours)}</span>
-                            <span>{formatCurrency(client.revenue)}</span>
-                          </div>
-                          <div className="w-full bg-muted rounded-full h-2">
-                            <div 
-                              className="bg-primary h-2 rounded-full transition-all duration-300" 
-                              style={{ width: `${client.percentage}%` }}
-                            />
-                          </div>
+                    {clientAnalytics.length > 0 ? (
+                      <div className="space-y-6">
+                        {/* Pie Chart */}
+                        <div className="h-[200px]">
+                          <ChartContainer
+                            config={{
+                              revenue: {
+                                label: "Omzet",
+                                color: "hsl(var(--primary))",
+                              },
+                            }}
+                            className="h-full"
+                          >
+                            <ResponsiveContainer width="100%" height="100%">
+                              <RechartsPieChart>
+                                <Pie
+                                  data={clientAnalytics.slice(0, 5)}
+                                  cx="50%"
+                                  cy="50%"
+                                  outerRadius={60}
+                                  dataKey="revenue"
+                                  nameKey="name"
+                                >
+                                  {clientAnalytics.slice(0, 5).map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                  ))}
+                                </Pie>
+                                <ChartTooltip content={<ChartTooltipContent />} />
+                              </RechartsPieChart>
+                            </ResponsiveContainer>
+                          </ChartContainer>
                         </div>
-                      ))}
-                    </div>
+
+                        {/* Client List */}
+                        <div className="space-y-4">
+                          {clientAnalytics.slice(0, 5).map((client, index) => (
+                            <div key={index} className="space-y-2">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="font-medium">{client.name}</span>
+                                <span>{client.percentage}%</span>
+                              </div>
+                              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                <span>{formatHours(client.hours)}</span>
+                                <span>{formatCurrency(client.revenue)}</span>
+                              </div>
+                              <div className="w-full bg-muted rounded-full h-2">
+                                <div 
+                                  className="h-2 rounded-full transition-all duration-300" 
+                                  style={{ 
+                                    width: `${client.percentage}%`,
+                                    backgroundColor: COLORS[index % COLORS.length]
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center text-muted-foreground py-8">
+                        Geen data beschikbaar voor deze periode
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -283,23 +369,10 @@ const Reports = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      {projectPerformance.map((project, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                          <div>
-                            <div className="font-medium">{project.name}</div>
-                            <div className="text-sm text-muted-foreground">{project.client}</div>
-                            <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
-                              <span>{formatHours(project.hours)}</span>
-                              <span>•</span>
-                              <span>{formatCurrency(project.revenue)}</span>
-                            </div>
-                          </div>
-                          <Badge variant={project.status === 'Actief' ? 'default' : 'secondary'}>
-                            {project.status}
-                          </Badge>
-                        </div>
-                      ))}
+                    <div className="text-center text-muted-foreground py-8">
+                      <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>Projectprestaties worden binnenkort toegevoegd</p>
+                      <p className="text-sm">Deze sectie toont gedetailleerde project analytics</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -320,14 +393,18 @@ const Reports = () => {
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <div className="font-medium">Beste klant</div>
-                      <div className="text-2xl font-bold text-primary">{stats.topClient}</div>
+                      <div className="text-2xl font-bold text-primary">
+                        {analytics?.topClient || 'Geen data'}
+                      </div>
                       <p className="text-sm text-muted-foreground">
-                        29% van je totale omzet deze periode
+                        {clientAnalytics[0]?.percentage || 0}% van je totale omzet deze periode
                       </p>
                     </div>
                     <div className="space-y-2">
                       <div className="font-medium">Populairste project</div>
-                      <div className="text-2xl font-bold text-primary">{stats.topProject}</div>
+                      <div className="text-2xl font-bold text-primary">
+                        {analytics?.topProject || 'Geen data'}
+                      </div>
                       <p className="text-sm text-muted-foreground">
                         Meeste uren besteed aan dit project
                       </p>
@@ -337,9 +414,18 @@ const Reports = () => {
                   <div className="mt-6 p-4 bg-muted/50 rounded-lg">
                     <h4 className="font-medium mb-2">Aanbevelingen</h4>
                     <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>• Overweeg je uurtarief te verhogen - je prestaties zijn sterk</li>
-                      <li>• {stats.topClient} is je beste klant - investeer in deze relatie</li>
-                      <li>• Je hebt {formatCurrency(stats.outstandingAmount)} openstaand - stuur herinneringen</li>
+                      {analytics && analytics.totalRevenue > 0 && (
+                        <li>• Je gemiddelde uurtarief is {formatCurrency(analytics.averageHourlyRate)}</li>
+                      )}
+                      {analytics?.topClient && (
+                        <li>• {analytics.topClient} is je beste klant - investeer in deze relatie</li>
+                      )}
+                      {analytics && analytics.outstandingAmount > 0 && (
+                        <li>• Je hebt {formatCurrency(analytics.outstandingAmount)} openstaand - stuur herinneringen</li>
+                      )}
+                      {(!analytics || analytics.totalHours === 0) && (
+                        <li>• Begin met het registreren van je tijd om inzichten te krijgen</li>
+                      )}
                     </ul>
                   </div>
                 </CardContent>
