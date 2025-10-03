@@ -21,26 +21,38 @@ export const Header: React.FC = () => {
           </Link>
         </div>
 
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+          <Link
+            to="/about"
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Over ons
+          </Link>
+          <Link
+            to="/contact"
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Contact
+          </Link>
           {user && (
             <>
               <Link 
                 to="/dashboard/time" 
-                className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
               >
                 <Clock className="h-4 w-4" />
                 Tijdregistratie
               </Link>
               <Link 
                 to="/dashboard/clients" 
-                className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
               >
                 <Users className="h-4 w-4" />
                 Klanten
               </Link>
               <Link 
                 to="/dashboard/invoices" 
-                className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
               >
                 <FileText className="h-4 w-4" />
                 Facturen

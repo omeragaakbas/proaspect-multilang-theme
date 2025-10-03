@@ -1,5 +1,6 @@
 import React from 'react';
-import { ProAspectLogo } from '@/components/ProAspectLogo';
+import { Link } from 'react-router-dom';
+import { ProAspectDark } from '@/components/ProAspectDark';
 import { Mail, Phone, MapPin, ExternalLink } from 'lucide-react';
 
 export const Footer: React.FC = () => {
@@ -8,7 +9,7 @@ export const Footer: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div>
-            <ProAspectLogo className="mb-4 filter invert" />
+            <ProAspectDark className="mb-4" />
             <p className="text-gray-400 text-sm mb-4">
               Professionele tijd- en facturatieoplossing voor Nederlandse ZZP'ers.
             </p>
@@ -32,16 +33,16 @@ export const Footer: React.FC = () => {
             <h4 className="font-semibold mb-4">Product</h4>
             <ul className="space-y-2 text-sm text-gray-400">
               <li>
-                <a href="#" className="hover:text-primary transition-colors">Tijdregistratie</a>
+                <Link to="/features/time-tracking" className="hover:text-primary transition-colors">Tijdregistratie</Link>
               </li>
               <li>
-                <a href="#" className="hover:text-primary transition-colors">Facturatie</a>
+                <Link to="/features/invoicing" className="hover:text-primary transition-colors">Facturatie</Link>
               </li>
               <li>
-                <a href="#" className="hover:text-primary transition-colors">Rapportage</a>
+                <Link to="/features/reporting" className="hover:text-primary transition-colors">Rapportage</Link>
               </li>
               <li>
-                <a href="#" className="hover:text-primary transition-colors">Mobile App</a>
+                <Link to="/features/mobile-app" className="hover:text-primary transition-colors">Mobile App</Link>
               </li>
             </ul>
           </div>
@@ -50,16 +51,16 @@ export const Footer: React.FC = () => {
             <h4 className="font-semibold mb-4">Support</h4>
             <ul className="space-y-2 text-sm text-gray-400">
               <li>
-                <a href="#" className="hover:text-primary transition-colors">Help Center</a>
+                <Link to="/support/help-center" className="hover:text-primary transition-colors">Help Center</Link>
               </li>
               <li>
-                <a href="#" className="hover:text-primary transition-colors">API Documentatie</a>
+                <Link to="/support/api-docs" className="hover:text-primary transition-colors">API Documentatie</Link>
               </li>
               <li>
-                <a href="#" className="hover:text-primary transition-colors">Contact</a>
+                <Link to="/contact" className="hover:text-primary transition-colors">Contact</Link>
               </li>
               <li>
-                <a href="#" className="hover:text-primary transition-colors">Status</a>
+                <Link to="/status" className="hover:text-primary transition-colors">Status</Link>
               </li>
             </ul>
           </div>
@@ -68,16 +69,16 @@ export const Footer: React.FC = () => {
             <h4 className="font-semibold mb-4">Bedrijf</h4>
             <ul className="space-y-2 text-sm text-gray-400">
               <li>
-                <a href="#" className="hover:text-primary transition-colors">Over Ons</a>
+                <Link to="/about" className="hover:text-primary transition-colors">Over Ons</Link>
               </li>
               <li>
-                <a href="#" className="hover:text-primary transition-colors">Privacy</a>
+                <Link to="/privacy" className="hover:text-primary transition-colors">Privacy</Link>
               </li>
               <li>
-                <a href="#" className="hover:text-primary transition-colors">Voorwaarden</a>
+                <Link to="/terms" className="hover:text-primary transition-colors">Voorwaarden</Link>
               </li>
               <li>
-                <a href="#" className="flex items-center gap-1 hover:text-primary transition-colors">
+                <a href="https://www.proaspect.nl" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary transition-colors">
                   www.proaspect.nl
                   <ExternalLink className="h-3 w-3" />
                 </a>

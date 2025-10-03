@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -16,6 +16,9 @@ import Approvals from "./pages/dashboard/Approvals";
 import Reports from "./pages/dashboard/Reports";
 import Settings from "./pages/dashboard/Settings";
 import NotFound from "./pages/NotFound";
+import { AboutPage } from "./pages/AboutPage";
+import { ContactPage } from "./pages/ContactPage";
+// Importeer hier je andere pagina's, bijvoorbeeld de Homepage
 
 const queryClient = new QueryClient();
 
@@ -25,11 +28,13 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
+        <Router>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/dashboard/clients" element={<Clients />} />
             <Route path="/dashboard/projects" element={<Projects />} />
@@ -41,7 +46,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
+        </Router>
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
