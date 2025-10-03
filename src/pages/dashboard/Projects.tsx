@@ -9,55 +9,34 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, FolderOpen, Archive, Edit } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useProjects } from '@/hooks/useProjects';
+import { useClients } from '@/hooks/useClients';
 
 const Projects = () => {
-  const { toast } = useToast();
+  const { projects, isLoading, createProject } = useProjects();
+  const { clients } = useClients();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [projectName, setProjectName] = useState('');
   const [projectCode, setProjectCode] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
   const [hourlyRate, setHourlyRate] = useState('');
-
-  // Mock data - replace with actual Supabase query
-  const projects = [
-    {
-      id: '1',
-      name: 'Website Redesign',
-      code: 'WEB-001',
-      client: 'Acme Corp',
-      hourlyRate: 75,
-      description: 'Complete redesign van de bedrijfswebsite',
-      archived: false
-    },
-    {
-      id: '2',
-      name: 'API Development',
-      code: 'API-001',
-      client: 'TechStart BV',
-      hourlyRate: 85,
-      description: 'REST API ontwikkeling voor mobile app',
-      archived: false
-    },
-    {
-      id: '3',
-      name: 'Database Optimalisatie',
-      code: 'DB-001',
-      client: 'DataCorp NL',
-      hourlyRate: 95,
-      description: 'Performance verbetering database queries',
-      archived: false
-    }
-  ];
+  const [selectedClientId, setSelectedClientId] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // TODO: Add Supabase insert logic
-    toast({
-      title: "Project aangemaakt",
-      description: `${projectName} is succesvol toegevoegd.`,
+    if (!selectedClientId) {
+      return;
+    }
+
+    createProject({
+      name: projectName,
+      code: projectCode || undefined,
+      description: projectDescription || undefined,
+      client_id: selectedClientId,
+      hourly_rate: hourlyRate ? parseFloat(hourlyRate) : undefined,
     });
     
     setIsDialogOpen(false);
@@ -65,6 +44,7 @@ const Projects = () => {
     setProjectCode('');
     setProjectDescription('');
     setHourlyRate('');
+    setSelectedClientId('');
   };
 
   return (
@@ -110,6 +90,22 @@ const Projects = () => {
                             placeholder="Website Redesign"
                             required
                           />
+                        </div>
+
+                        <div className="grid gap-2">
+                          <Label htmlFor="client">Klant *</Label>
+                          <Select value={selectedClientId} onValueChange={setSelectedClientId} required>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecteer klant" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {clients.map((client) => (
+                                <SelectItem key={client.id} value={client.id}>
+                                  {client.name_i18n.nl}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
 
                         <div className="grid gap-2">
@@ -174,7 +170,10 @@ const Projects = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      €{(projects.reduce((sum, p) => sum + p.hourlyRate, 0) / projects.length).toFixed(2)}
+                      {projects.length > 0 && projects.some(p => p.hourly_rate) 
+                        ? `€${(projects.reduce((sum, p) => sum + (p.hourly_rate || 0), 0) / projects.filter(p => p.hourly_rate).length / 100).toFixed(2)}`
+                        : '€0.00'
+                      }
                     </div>
                   </CardContent>
                 </Card>
@@ -190,52 +189,58 @@ const Projects = () => {
               </div>
 
               {/* Projects List */}
-              <div className="grid gap-4">
-                {projects.map((project) => (
-                  <Card key={project.id} className="hover:shadow-md transition-shadow">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-4">
-                          <div className="p-3 bg-primary/10 rounded-lg">
-                            <FolderOpen className="h-6 w-6 text-primary" />
+              {isLoading ? (
+                <div className="text-center py-12 text-muted-foreground">Projecten laden...</div>
+              ) : (
+                <div className="grid gap-4">
+                  {projects.map((project) => (
+                    <Card key={project.id} className="hover:shadow-md transition-shadow">
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-4">
+                            <div className="p-3 bg-primary/10 rounded-lg">
+                              <FolderOpen className="h-6 w-6 text-primary" />
+                            </div>
+                            <div>
+                              <CardTitle className="flex items-center gap-2">
+                                {project.name_i18n.nl}
+                                {project.archived && (
+                                  <Badge variant="secondary">
+                                    <Archive className="h-3 w-3 mr-1" />
+                                    Gearchiveerd
+                                  </Badge>
+                                )}
+                              </CardTitle>
+                              <CardDescription className="mt-1">
+                                {project.code && <span className="font-mono">{project.code}</span>}
+                                {project.code && ' • '}
+                                {project.client?.name_i18n.nl}
+                              </CardDescription>
+                            </div>
                           </div>
-                          <div>
-                            <CardTitle className="flex items-center gap-2">
-                              {project.name}
-                              {project.archived && (
-                                <Badge variant="secondary">
-                                  <Archive className="h-3 w-3 mr-1" />
-                                  Gearchiveerd
-                                </Badge>
-                              )}
-                            </CardTitle>
-                            <CardDescription className="mt-1">
-                              {project.code && <span className="font-mono">{project.code}</span>}
-                              {project.code && ' • '}
-                              {project.client}
-                            </CardDescription>
+                          
+                          <div className="flex items-center gap-2">
+                            {project.hourly_rate && (
+                              <div className="text-right mr-4">
+                                <div className="text-sm text-muted-foreground">Uurtarief</div>
+                                <div className="text-lg font-bold">€{(project.hourly_rate / 100).toFixed(2)}</div>
+                              </div>
+                            )}
+                            <Button variant="ghost" size="icon">
+                              <Edit className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
-                        
-                        <div className="flex items-center gap-2">
-                          <div className="text-right mr-4">
-                            <div className="text-sm text-muted-foreground">Uurtarief</div>
-                            <div className="text-lg font-bold">€{project.hourlyRate}</div>
-                          </div>
-                          <Button variant="ghost" size="icon">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    {project.description && (
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground">{project.description}</p>
-                      </CardContent>
-                    )}
-                  </Card>
-                ))}
-              </div>
+                      </CardHeader>
+                      {project.description_i18n?.nl && (
+                        <CardContent>
+                          <p className="text-sm text-muted-foreground">{project.description_i18n.nl}</p>
+                        </CardContent>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              )}
 
               {projects.length === 0 && (
                 <Card>
