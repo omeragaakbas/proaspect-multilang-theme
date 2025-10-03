@@ -1,5 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+
+const InvoicePDFSchema = z.object({
+  invoiceId: z.string().uuid()
+});
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,11 +17,38 @@ serve(async (req) => {
   }
 
   try {
+    // Authenticate user
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    const { invoiceId } = await req.json();
+    // Create client with user's token for auth
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate input
+    const body = await req.json();
+    const { invoiceId } = InvoicePDFSchema.parse(body);
+
+    // Use service role to fetch invoice
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get invoice with all details
     const { data: invoice, error: invoiceError } = await supabase
@@ -30,7 +62,15 @@ serve(async (req) => {
       .eq('id', invoiceId)
       .single();
 
-    if (invoiceError) throw invoiceError;
+    if (invoiceError) throw new Error('Invoice not found');
+    
+    // Verify user owns this invoice
+    if (invoice.contractor_id !== user.id) {
+      return new Response(
+        JSON.stringify({ error: 'Access denied' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Generate HTML for PDF
     const html = `
@@ -143,8 +183,15 @@ serve(async (req) => {
     );
   } catch (error: any) {
     console.error('PDF generation error:', error);
+    
+    // Sanitize error message
+    let userMessage = 'Failed to generate PDF';
+    if (error instanceof z.ZodError) {
+      userMessage = 'Invalid invoice ID provided';
+    }
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: userMessage }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

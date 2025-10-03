@@ -41,15 +41,26 @@ export default function ClientPortalView() {
 
   const loadInvoices = async () => {
     try {
-      // Verify token and get client_id
+      // Verify token and check expiry
       const { data: tokenData, error: tokenError } = await supabase
         .from('client_access_tokens')
-        .select('client_id')
+        .select('client_id, expires_at')
         .eq('token', token)
         .maybeSingle();
 
-      if (tokenError) throw tokenError;
-      if (!tokenData) throw new Error('Ongeldige of verlopen toegangstoken');
+      if (tokenError) throw new Error('Unable to verify access');
+      if (!tokenData) throw new Error('Invalid or expired access link');
+      
+      // Check token expiry
+      if (tokenData.expires_at && new Date(tokenData.expires_at) < new Date()) {
+        throw new Error('This access link has expired');
+      }
+
+      // Update last_used_at
+      await supabase
+        .from('client_access_tokens')
+        .update({ last_used_at: new Date().toISOString() })
+        .eq('token', token);
 
       // Load invoices for this client
       const { data, error } = await supabase
@@ -58,10 +69,11 @@ export default function ClientPortalView() {
         .eq('client_id', tokenData.client_id)
         .order('issue_date', { ascending: false });
 
-      if (error) throw error;
+      if (error) throw new Error('Unable to load invoices');
       setInvoices(data || []);
     } catch (err: any) {
-      setError(err.message);
+      console.error('Portal error:', err);
+      setError(err.message || 'An error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -77,7 +89,7 @@ export default function ClientPortalView() {
         })
         .eq('id', invoiceId);
 
-      if (error) throw error;
+      if (error) throw new Error('Failed to approve invoice');
 
       toast({
         title: 'Factuur goedgekeurd',
@@ -86,9 +98,10 @@ export default function ClientPortalView() {
 
       loadInvoices();
     } catch (err: any) {
+      console.error('Approval error:', err);
       toast({
         title: 'Fout',
-        description: err.message,
+        description: 'Kon factuur niet goedkeuren',
         variant: 'destructive',
       });
     }

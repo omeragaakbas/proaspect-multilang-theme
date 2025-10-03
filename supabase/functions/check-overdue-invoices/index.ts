@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const cronSecret = Deno.env.get("CRON_SECRET");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,6 +16,15 @@ serve(async (req) => {
   }
 
   try {
+    // Verify request is from authorized cron job
+    const authHeader = req.headers.get('authorization');
+    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+      console.error('Unauthorized access attempt to check-overdue-invoices');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: corsHeaders }
+      );
+    }
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const today = new Date();
     const threeDaysFromNow = new Date(today);
@@ -167,7 +177,7 @@ serve(async (req) => {
   } catch (error: any) {
     console.error("Error in check-overdue-invoices:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: 'Failed to process overdue invoices' }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

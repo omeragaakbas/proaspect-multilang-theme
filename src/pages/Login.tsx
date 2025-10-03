@@ -49,7 +49,20 @@ const Login = () => {
       const { error } = await signIn(validatedData.email, validatedData.password);
 
       if (error) {
-        setError(error.message);
+        // Sanitize error messages
+        console.error('Login error:', error);
+        
+        if (error.message.toLowerCase().includes('credential') || 
+            error.message.toLowerCase().includes('password')) {
+          setError('Invalid email or password');
+        } else if (error.message.toLowerCase().includes('confirm') || 
+                   error.message.toLowerCase().includes('verif')) {
+          setError('Please verify your email address');
+        } else if (error.message.toLowerCase().includes('account')) {
+          setError('Account access issue - please contact support');
+        } else {
+          setError('Unable to sign in. Please try again.');
+        }
         setLoading(false);
       } else {
         navigate('/dashboard');

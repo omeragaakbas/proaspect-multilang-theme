@@ -1,22 +1,24 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 import { Resend } from "https://esm.sh/resend@4.0.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const systemSecret = Deno.env.get("SYSTEM_SECRET");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface NotificationRequest {
-  type: 'invoice_sent' | 'invoice_viewed' | 'invoice_paid' | 'invoice_overdue' | 'payment_reminder' | 'time_entry_approved' | 'time_entry_rejected' | 'team_invitation';
-  recipientEmail: string;
-  recipientName: string;
-  data: Record<string, any>;
-}
+const NotificationSchema = z.object({
+  type: z.enum(['invoice_sent', 'invoice_viewed', 'invoice_paid', 'invoice_overdue', 'payment_reminder', 'time_entry_approved', 'time_entry_rejected', 'team_invitation']),
+  recipientEmail: z.string().email().max(255),
+  recipientName: z.string().trim().min(1).max(100),
+  data: z.record(z.any())
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -24,8 +26,21 @@ serve(async (req) => {
   }
 
   try {
+    // Verify request is from authorized system (cron jobs, other edge functions)
+    const authHeader = req.headers.get('authorization');
+    if (systemSecret && authHeader !== `Bearer ${systemSecret}`) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized access' }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { type, recipientEmail, recipientName, data }: NotificationRequest = await req.json();
+    
+    // Validate input with Zod
+    const body = await req.json();
+    const validated = NotificationSchema.parse(body);
+    const { type, recipientEmail, recipientName, data } = validated;
 
     console.log(`Sending ${type} notification to ${recipientEmail}`);
 
@@ -144,8 +159,17 @@ serve(async (req) => {
     );
   } catch (error: any) {
     console.error("Error sending notification:", error);
+    
+    // Sanitize error message for client
+    let userMessage = 'Failed to send notification';
+    if (error instanceof z.ZodError) {
+      userMessage = 'Invalid input provided';
+    } else if (error.message?.includes('email')) {
+      userMessage = 'Email delivery failed';
+    }
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: userMessage }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

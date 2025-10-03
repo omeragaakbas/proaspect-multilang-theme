@@ -1,15 +1,17 @@
 project_id = "dhuldgnqxistajvuwgao"
 
+# Authenticated functions - require JWT
+[functions.create-payment-link]
+verify_jwt = true
+
+[functions.generate-invoice-pdf]
+verify_jwt = true
+
+# System functions - require cron secret
 [functions.send-notification]
 verify_jwt = false
 
 [functions.check-overdue-invoices]
-verify_jwt = false
-
-[functions.generate-invoice-pdf]
-verify_jwt = false
-
-[functions.create-payment-link]
 verify_jwt = false
 
 [functions.generate-recurring-invoices]
