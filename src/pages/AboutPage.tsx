@@ -200,10 +200,10 @@ export const AboutPage: React.FC = () => {
           
           <div className="grid md:grid-cols-4 gap-6">
             {[
-              {name: "Jan Dijkstra", title: "Oprichter & CEO"},
-              {name: "Lisa van der Berg", title: "Hoofd Ontwikkeling"},
-              {name: "Mark Bakker", title: "Klantenservice Manager"},
-              {name: "Emma de Vries", title: "Marketing Specialist"}
+              {name: "Caner Akbas", title: "Oprichter & CEO"},
+              {name: "Dilek Ates", title: "Administratief Medewerker"},
+              {name: "Ömer Aga Akbas", title: "Full-stack engineer"},
+              {name: "Lorem Ipsum", title: "Administratief Medewerker"}
             ].map((person, i) => (
               <div key={i} className="text-center">
                 <div className="w-32 h-32 rounded-full bg-muted mx-auto mb-4"></div>
