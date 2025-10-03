@@ -53,6 +53,75 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: unknown | null
+          resource_id: string | null
+          resource_type: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          resource_id?: string | null
+          resource_type: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          resource_id?: string | null
+          resource_type?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      backup_exports: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          export_type: string
+          file_url: string | null
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          export_type: string
+          file_url?: string | null
+          id?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          export_type?: string
+          file_url?: string | null
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chats: {
         Row: {
           course: string | null
@@ -392,6 +461,48 @@ export type Database = {
           },
         ]
       }
+      invoice_templates: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_default: boolean | null
+          line_items: Json
+          name: string
+          notes: string | null
+          payment_terms: string | null
+          updated_at: string
+          vat_rate: number | null
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          line_items?: Json
+          name: string
+          notes?: string | null
+          payment_terms?: string | null
+          updated_at?: string
+          vat_rate?: number | null
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          line_items?: Json
+          name?: string
+          notes?: string | null
+          payment_terms?: string | null
+          updated_at?: string
+          vat_rate?: number | null
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           client_approved_at: string | null
@@ -612,17 +723,21 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_locked_until: string | null
           availability: Json | null
           bio: string | null
           courses: string[] | null
           created_at: string
           discoverable: boolean | null
           email: string
+          failed_login_attempts: number | null
           geo_lat: number | null
           geo_lng: number | null
           geo_updated_at: string | null
           id: string
           languages: string[] | null
+          last_login_at: string | null
+          last_login_ip: unknown | null
           major: string
           name: string
           photo_url: string | null
@@ -639,17 +754,21 @@ export type Database = {
           year: number
         }
         Insert: {
+          account_locked_until?: string | null
           availability?: Json | null
           bio?: string | null
           courses?: string[] | null
           created_at?: string
           discoverable?: boolean | null
           email: string
+          failed_login_attempts?: number | null
           geo_lat?: number | null
           geo_lng?: number | null
           geo_updated_at?: string | null
           id?: string
           languages?: string[] | null
+          last_login_at?: string | null
+          last_login_ip?: unknown | null
           major: string
           name: string
           photo_url?: string | null
@@ -666,17 +785,21 @@ export type Database = {
           year: number
         }
         Update: {
+          account_locked_until?: string | null
           availability?: Json | null
           bio?: string | null
           courses?: string[] | null
           created_at?: string
           discoverable?: boolean | null
           email?: string
+          failed_login_attempts?: number | null
           geo_lat?: number | null
           geo_lng?: number | null
           geo_updated_at?: string | null
           id?: string
           languages?: string[] | null
+          last_login_at?: string | null
+          last_login_ip?: unknown | null
           major?: string
           name?: string
           photo_url?: string | null

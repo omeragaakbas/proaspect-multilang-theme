@@ -3,10 +3,15 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { WifiOff, Wifi } from 'lucide-react';
 
 export function OfflineIndicator() {
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState(() => 
+    typeof window !== 'undefined' ? navigator.onLine : true
+  );
   const [showOnlineMessage, setShowOnlineMessage] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
+    
     const handleOnline = () => {
       setIsOnline(true);
       setShowOnlineMessage(true);
@@ -18,16 +23,20 @@ export function OfflineIndicator() {
       setShowOnlineMessage(false);
     };
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+    }
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      }
     };
   }, []);
 
-  if (isOnline && !showOnlineMessage) {
+  if (!isMounted || (isOnline && !showOnlineMessage)) {
     return null;
   }
 

@@ -20,6 +20,8 @@ import Expenses from "./pages/dashboard/Expenses";
 import Team from "./pages/dashboard/Team";
 import ClientPortal from "./pages/dashboard/ClientPortal";
 import ClientPortalView from "./pages/ClientPortalView";
+import AuditLogs from "./pages/dashboard/AuditLogs";
+import Security from "./pages/dashboard/Security";
 import NotFound from "./pages/NotFound";
 import { AboutPage } from "./pages/AboutPage";
 import { ContactPage } from "./pages/ContactPage";
@@ -57,6 +59,8 @@ const App = () => (
             <Route path="/dashboard/reports" element={<Reports />} />
             <Route path="/dashboard/team" element={<Team />} />
             <Route path="/dashboard/client-portal" element={<ClientPortal />} />
+            <Route path="/dashboard/audit-logs" element={<AuditLogs />} />
+            <Route path="/dashboard/security" element={<Security />} />
             <Route path="/dashboard/settings" element={<Settings />} />
             <Route path="/client-portal" element={<ClientPortalView />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

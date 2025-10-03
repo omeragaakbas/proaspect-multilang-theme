@@ -1,4 +1,4 @@
-import { Clock, Users, FileText, FolderOpen, Settings, BarChart3, Home, CheckCircle, Receipt, Key } from 'lucide-react';
+import { Clock, Users, FileText, FolderOpen, Settings, BarChart3, Home, CheckCircle, Receipt, Key, Shield, Lock } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -72,6 +72,16 @@ const collaborationItems = [
 ];
 
 const settingsItems = [
+  { 
+    title: 'Audit Logs', 
+    url: '/dashboard/audit-logs', 
+    icon: Shield 
+  },
+  { 
+    title: 'Beveiliging', 
+    url: '/dashboard/security', 
+    icon: Lock 
+  },
   { 
     title: 'Instellingen', 
     url: '/dashboard/settings', 
