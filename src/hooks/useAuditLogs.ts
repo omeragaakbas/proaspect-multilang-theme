@@ -37,19 +37,17 @@ export function useAuditLogs() {
       resource_id?: string;
       details?: Record<string, any>;
     }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
 
-      const { error } = await supabase
-        .from('audit_logs')
-        .insert({
-          user_id: user.id,
+      const { error } = await supabase.functions.invoke('audit-log', {
+        body: {
           action: log.action,
           resource_type: log.resource_type,
           resource_id: log.resource_id,
           details: log.details || {},
-          user_agent: navigator.userAgent,
-        });
+        },
+      });
 
       if (error) throw error;
     },

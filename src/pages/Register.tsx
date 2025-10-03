@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Mail, Lock, User, Building, ArrowRight, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 
 const registerSchema = z.object({
@@ -86,16 +87,23 @@ const Register = () => {
         // Only admins can assign other roles via admin functions
       };
 
-      const { error } = await signUp(validatedData.email, validatedData.password, userData);
+      // Use secure signup edge function with password strength and breach checks
+      const { data, error: signupError } = await supabase.functions.invoke('auth-secure-signup', {
+        body: {
+          email: validatedData.email,
+          password: validatedData.password,
+          userData,
+        },
+      });
 
       setLoading(false);
 
-      if (error) {
-        setError(error.message);
+      if (signupError || data?.error) {
+        setError(signupError?.message || data?.error || 'Registration failed');
       } else {
         navigate('/login', { 
           state: { 
-            message: 'Registratie succesvol! Check je e-mail voor de verificatielink.' 
+            message: 'Registratie succesvol! Je kunt nu inloggen met je account.' 
           }
         });
       }

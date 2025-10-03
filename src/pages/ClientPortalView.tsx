@@ -41,36 +41,19 @@ export default function ClientPortalView() {
 
   const loadInvoices = async () => {
     try {
-      // Verify token and check expiry
-      const { data: tokenData, error: tokenError } = await supabase
-        .from('client_access_tokens')
-        .select('client_id, expires_at')
-        .eq('token', token)
-        .maybeSingle();
+      // Use secure edge function for client portal access
+      const { data, error } = await supabase.functions.invoke('client-portal', {
+        body: {
+          token,
+          action: 'get_invoices',
+        },
+      });
 
-      if (tokenError) throw new Error('Unable to verify access');
-      if (!tokenData) throw new Error('Invalid or expired access link');
-      
-      // Check token expiry
-      if (tokenData.expires_at && new Date(tokenData.expires_at) < new Date()) {
-        throw new Error('This access link has expired');
+      if (error || data?.error) {
+        throw new Error(data?.error || error?.message || 'Unable to load invoices');
       }
 
-      // Update last_used_at
-      await supabase
-        .from('client_access_tokens')
-        .update({ last_used_at: new Date().toISOString() })
-        .eq('token', token);
-
-      // Load invoices for this client
-      const { data, error } = await supabase
-        .from('invoices')
-        .select('*')
-        .eq('client_id', tokenData.client_id)
-        .order('issue_date', { ascending: false });
-
-      if (error) throw new Error('Unable to load invoices');
-      setInvoices(data || []);
+      setInvoices(data.invoices || []);
     } catch (err: any) {
       console.error('Portal error:', err);
       setError(err.message || 'An error occurred');
@@ -81,15 +64,19 @@ export default function ClientPortalView() {
 
   const approveInvoice = async (invoiceId: string) => {
     try {
-      const { error } = await supabase
-        .from('invoices')
-        .update({
-          client_approved_at: new Date().toISOString(),
-          client_approved_by: 'client',
-        })
-        .eq('id', invoiceId);
+      // Use secure edge function for approval
+      const { data, error } = await supabase.functions.invoke('client-portal', {
+        body: {
+          token,
+          action: 'approve_invoice',
+          invoice_id: invoiceId,
+          approved_by: 'Client Portal User',
+        },
+      });
 
-      if (error) throw new Error('Failed to approve invoice');
+      if (error || data?.error) {
+        throw new Error(data?.error || error?.message || 'Failed to approve invoice');
+      }
 
       toast({
         title: 'Factuur goedgekeurd',

@@ -7,7 +7,17 @@ verify_jwt = true
 [functions.generate-invoice-pdf]
 verify_jwt = true
 
-# System functions - require cron secret
+[functions.audit-log]
+verify_jwt = true
+
+# Public functions - no JWT required
+[functions.client-portal]
+verify_jwt = false
+
+[functions.auth-secure-signup]
+verify_jwt = false
+
+# System functions - require cron/system secret
 [functions.send-notification]
 verify_jwt = false
 

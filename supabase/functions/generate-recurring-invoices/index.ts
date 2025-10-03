@@ -16,13 +16,22 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const cronSecret = Deno.env.get('CRON_SECRET');
     
-    // Verify request is from authorized cron job
+    // Verify request is from authorized cron job (MANDATORY)
     const authHeader = req.headers.get('authorization');
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    
+    if (!cronSecret) {
+      console.error('CRON_SECRET not configured');
+      return new Response(
+        JSON.stringify({ error: 'Server configuration error' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
       console.error('Unauthorized access attempt to generate-recurring-invoices');
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: corsHeaders }
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
     

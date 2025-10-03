@@ -26,9 +26,19 @@ serve(async (req) => {
   }
 
   try {
-    // Verify request is from authorized system (cron jobs, other edge functions)
+    // Verify request is from authorized system (MANDATORY)
     const authHeader = req.headers.get('authorization');
-    if (systemSecret && authHeader !== `Bearer ${systemSecret}`) {
+    
+    if (!systemSecret) {
+      console.error('SYSTEM_SECRET not configured');
+      return new Response(
+        JSON.stringify({ error: 'Server configuration error' }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
+    if (!authHeader || authHeader !== `Bearer ${systemSecret}`) {
+      console.error('Unauthorized access attempt to send-notification');
       return new Response(
         JSON.stringify({ error: 'Unauthorized access' }),
         { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
