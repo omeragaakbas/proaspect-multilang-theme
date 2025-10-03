@@ -22,19 +22,40 @@ export const Header: React.FC = () => {
         </div>
 
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-          <Link
-            to="/about"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Over ons
-          </Link>
-          <Link
-            to="/contact"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Contact
-          </Link>
-          {user && (
+          {!user ? (
+            <>
+              <Link
+                to="/features"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Features
+              </Link>
+              <Link
+                to="/pricing"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Prijzen
+              </Link>
+              <Link
+                to="/faq"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                FAQ
+              </Link>
+              <Link
+                to="/about"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Over ons
+              </Link>
+              <Link
+                to="/contact"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Contact
+              </Link>
+            </>
+          ) : (
             <>
               <Link 
                 to="/dashboard/time" 
@@ -62,6 +83,14 @@ export const Header: React.FC = () => {
         </nav>
 
         <div className="flex items-center gap-3">
+          {!user && !loading && (
+            <a 
+              href="tel:+31701234567" 
+              className="hidden lg:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <span className="font-medium">070 123 4567</span>
+            </a>
+          )}
           {!loading && (
             <>
               {user ? (
