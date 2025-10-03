@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/dashboard/AppSidebar';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,11 +22,12 @@ import {
   Search, 
   Building, 
   Mail, 
-  Phone, 
+  User, 
   MapPin, 
   MoreHorizontal,
   Edit,
-  Archive
+  Archive,
+  Loader2
 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import {
@@ -36,42 +40,130 @@ import {
 const Clients = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showNewClientDialog, setShowNewClientDialog] = useState(false);
+  const [clients, setClients] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState({
+    name: '',
+    contact_name: '',
+    contact_email: '',
+    billing_email: '',
+    street: '',
+    postal_code: '',
+    city: '',
+    country: 'Nederland'
+  });
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  // Mock data - will be replaced with real data from Supabase
-  const clients = [
-    {
-      id: '1',
-      name: 'ACME Corporation',
-      contact_name: 'John Doe',
-      contact_email: 'john@acme.com',
-      projects_count: 3,
-      total_hours: 120.5,
-      status: 'active'
-    },
-    {
-      id: '2',
-      name: 'TechStart BV',
-      contact_name: 'Sarah van der Berg',
-      contact_email: 'sarah@techstart.nl',
-      projects_count: 2,
-      total_hours: 85.0,
-      status: 'active'
-    },
-    {
-      id: '3',
-      name: 'Digital Solutions',
-      contact_name: 'Mike Johnson',
-      contact_email: 'mike@digitalsolutions.com',
-      projects_count: 1,
-      total_hours: 45.5,
-      status: 'archived'
+  useEffect(() => {
+    if (user) {
+      fetchClients();
     }
-  ];
+  }, [user]);
 
-  const filteredClients = clients.filter(client =>
-    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.contact_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const fetchClients = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('contractor_id', user?.id)
+        .eq('archived', false)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+      toast({
+        title: 'Fout',
+        description: 'Kon klanten niet laden',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .insert({
+          contractor_id: user?.id,
+          name_i18n: { nl: formData.name, en: formData.name, tr: formData.name },
+          contact_name: formData.contact_name,
+          contact_email: formData.contact_email,
+          billing_email: formData.billing_email,
+          address_json: {
+            street: formData.street,
+            postal_code: formData.postal_code,
+            city: formData.city,
+            country: formData.country
+          }
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Succes',
+        description: 'Klant succesvol toegevoegd'
+      });
+
+      setShowNewClientDialog(false);
+      setFormData({
+        name: '',
+        contact_name: '',
+        contact_email: '',
+        billing_email: '',
+        street: '',
+        postal_code: '',
+        city: '',
+        country: 'Nederland'
+      });
+      fetchClients();
+    } catch (error) {
+      console.error('Error creating client:', error);
+      toast({
+        title: 'Fout',
+        description: 'Kon klant niet toevoegen',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleArchiveClient = async (clientId: string) => {
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .update({ archived: true })
+        .eq('id', clientId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Succes',
+        description: 'Klant gearchiveerd'
+      });
+
+      fetchClients();
+    } catch (error) {
+      console.error('Error archiving client:', error);
+      toast({
+        title: 'Fout',
+        description: 'Kon klant niet archiveren',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const filteredClients = clients.filter(client => {
+    const name = client.name_i18n?.nl || client.name_i18n?.en || '';
+    return name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (client.contact_name || '').toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   return (
     <DashboardLayout>
@@ -104,50 +196,94 @@ const Clients = () => {
                         Voeg een nieuwe klant toe aan je portfolio
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-4">
+                    <form onSubmit={handleCreateClient} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="clientName">Bedrijfsnaam *</Label>
-                          <Input id="clientName" placeholder="ACME Corporation" required />
+                          <Input 
+                            id="clientName" 
+                            placeholder="ACME Corporation" 
+                            required 
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="contactName">Contactpersoon</Label>
-                          <Input id="contactName" placeholder="John Doe" />
+                          <Input 
+                            id="contactName" 
+                            placeholder="John Doe" 
+                            value={formData.contact_name}
+                            onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
+                          />
                         </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="contactEmail">E-mailadres</Label>
-                          <Input id="contactEmail" type="email" placeholder="john@acme.com" />
+                          <Input 
+                            id="contactEmail" 
+                            type="email" 
+                            placeholder="john@acme.com" 
+                            value={formData.contact_email}
+                            onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
+                          />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="billingEmail">Factuur e-mail</Label>
-                          <Input id="billingEmail" type="email" placeholder="billing@acme.com" />
+                          <Input 
+                            id="billingEmail" 
+                            type="email" 
+                            placeholder="billing@acme.com" 
+                            value={formData.billing_email}
+                            onChange={(e) => setFormData({ ...formData, billing_email: e.target.value })}
+                          />
                         </div>
                       </div>
 
                       <div className="space-y-2">
                         <Label htmlFor="address">Adres</Label>
                         <div className="space-y-2">
-                          <Input placeholder="Straatnaam 123" />
+                          <Input 
+                            placeholder="Straatnaam 123" 
+                            value={formData.street}
+                            onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+                          />
                           <div className="grid grid-cols-2 gap-2">
-                            <Input placeholder="1234AB" />
-                            <Input placeholder="Amsterdam" />
+                            <Input 
+                              placeholder="1234AB" 
+                              value={formData.postal_code}
+                              onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
+                            />
+                            <Input 
+                              placeholder="Amsterdam" 
+                              value={formData.city}
+                              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                            />
                           </div>
-                          <Input placeholder="Nederland" />
+                          <Input 
+                            placeholder="Nederland" 
+                            value={formData.country}
+                            onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                          />
                         </div>
                       </div>
 
                       <div className="flex gap-2">
-                        <Button variant="outline" className="flex-1" type="button">
+                        <Button 
+                          variant="outline" 
+                          className="flex-1" 
+                          type="button"
+                          onClick={() => setShowNewClientDialog(false)}
+                        >
                           Annuleren
                         </Button>
                         <Button variant="hero" className="flex-1" type="submit">
                           Klant toevoegen
                         </Button>
                       </div>
-                    </div>
+                    </form>
                   </DialogContent>
                 </Dialog>
               </div>
@@ -155,6 +291,12 @@ const Clients = () => {
 
             {/* Content */}
             <div className="flex-1 space-y-6 p-6">
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : (
+                <>
               {/* Search and Filters */}
               <div className="flex gap-4">
                 <div className="relative flex-1">
@@ -218,10 +360,10 @@ const Clients = () => {
                         <div className="space-y-1">
                           <CardTitle className="text-lg flex items-center gap-2">
                             <Building className="h-4 w-4" />
-                            {client.name}
+                            {client.name_i18n?.nl || client.name_i18n?.en || 'Geen naam'}
                           </CardTitle>
-                          <Badge variant={client.status === 'active' ? 'default' : 'secondary'}>
-                            {client.status === 'active' ? 'Actief' : 'Gearchiveerd'}
+                          <Badge variant={client.archived ? 'secondary' : 'default'}>
+                            {client.archived ? 'Gearchiveerd' : 'Actief'}
                           </Badge>
                         </div>
                         <DropdownMenu>
@@ -235,9 +377,9 @@ const Clients = () => {
                               <Edit className="mr-2 h-4 w-4" />
                               Bewerken
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleArchiveClient(client.id)}>
                               <Archive className="mr-2 h-4 w-4" />
-                              {client.status === 'active' ? 'Archiveren' : 'Activeren'}
+                              Archiveren
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -245,19 +387,21 @@ const Clients = () => {
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="space-y-2 text-sm">
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Mail className="h-3 w-3" />
-                          {client.contact_email}
-                        </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Phone className="h-3 w-3" />
-                          {client.contact_name}
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-between text-sm">
-                        <span>Projecten: <strong>{client.projects_count}</strong></span>
-                        <span>Uren: <strong>{client.total_hours}h</strong></span>
+                        {client.contact_email && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Mail className="h-3 w-3" />
+                            {client.contact_email}
+                          </div>
+                        )}
+                        {client.contact_name && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <User className="h-3 w-3" />
+                            {client.contact_name}
+                          </div>
+                        )}
+                        {!client.contact_email && !client.contact_name && (
+                          <div className="text-muted-foreground text-xs">Geen contactgegevens</div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -278,6 +422,8 @@ const Clients = () => {
                     </Button>
                   )}
                 </div>
+              )}
+              </>
               )}
             </div>
           </main>
