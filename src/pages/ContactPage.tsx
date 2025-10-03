@@ -190,8 +190,17 @@ export const ContactPage: React.FC = () => {
         {/* Map Section */}
         <section className="py-8">
           <div className="container mx-auto px-4">
-            <div className="h-64 bg-muted rounded-xl flex items-center justify-center border border-border">
-              <p className="text-muted-foreground">Google Maps kaart kan hier worden ingeladen</p>
+            <div className="h-96 rounded-xl overflow-hidden border border-border shadow-sm">
+              <iframe 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2452.0943707087767!2d4.282891476630456!3d52.07849857194658!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47c5b72e1b8e8b8d%3A0x9c6e3e8e8e8e8e8e!2sDe%20Werf%207%2C%202544%20EH%20Den%20Haag!5e0!3m2!1snl!2snl!4v1234567890123!5m2!1snl!2snl"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="ProAspect Kantoor Locatie"
+              />
             </div>
           </div>
         </section>
