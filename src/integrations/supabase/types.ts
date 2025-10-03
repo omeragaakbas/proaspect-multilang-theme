@@ -244,6 +244,62 @@ export type Database = {
           },
         ]
       }
+      expenses: {
+        Row: {
+          amount_cents: number
+          category: string
+          contractor_id: string
+          created_at: string
+          currency: string
+          date: string
+          description: string | null
+          id: string
+          project_id: string | null
+          receipt_url: string | null
+          updated_at: string
+          vat_amount_cents: number | null
+          vat_deductible: boolean
+        }
+        Insert: {
+          amount_cents: number
+          category: string
+          contractor_id: string
+          created_at?: string
+          currency?: string
+          date?: string
+          description?: string | null
+          id?: string
+          project_id?: string | null
+          receipt_url?: string | null
+          updated_at?: string
+          vat_amount_cents?: number | null
+          vat_deductible?: boolean
+        }
+        Update: {
+          amount_cents?: number
+          category?: string
+          contractor_id?: string
+          created_at?: string
+          currency?: string
+          date?: string
+          description?: string | null
+          id?: string
+          project_id?: string | null
+          receipt_url?: string | null
+          updated_at?: string
+          vat_amount_cents?: number | null
+          vat_deductible?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_line_items: {
         Row: {
           created_at: string
@@ -304,6 +360,8 @@ export type Database = {
           issue_date: string
           notes: string | null
           paid_at: string | null
+          payment_intent_id: string | null
+          payment_method: string | null
           payment_terms: string | null
           pdf_url: string | null
           sent_at: string | null
@@ -327,6 +385,8 @@ export type Database = {
           issue_date?: string
           notes?: string | null
           paid_at?: string | null
+          payment_intent_id?: string | null
+          payment_method?: string | null
           payment_terms?: string | null
           pdf_url?: string | null
           sent_at?: string | null
@@ -350,6 +410,8 @@ export type Database = {
           issue_date?: string
           notes?: string | null
           paid_at?: string | null
+          payment_intent_id?: string | null
+          payment_method?: string | null
           payment_terms?: string | null
           pdf_url?: string | null
           sent_at?: string | null

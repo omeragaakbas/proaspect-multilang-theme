@@ -1,119 +1,127 @@
-import React, { useState, useEffect } from 'react';
-import { format, startOfMonth, endOfMonth, subMonths, startOfWeek, endOfWeek, startOfYear, endOfYear } from 'date-fns';
+import React, { useMemo } from 'react';
+import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { useAnalytics } from '@/hooks/useAnalytics';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/dashboard/AppSidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
-import { 
-  BarChart3, 
-  TrendingUp, 
-  TrendingDown, 
-  Download, 
-  Calendar as CalendarIcon,
-  Clock,
-  Euro,
-  Users,
-  FileText,
-  PieChart,
-  Loader2
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import { TrendingUp, TrendingDown, Euro, Clock, FileText, Download } from 'lucide-react';
+import { useProjects } from '@/hooks/useProjects';
+import { useTimeEntries } from '@/hooks/useTimeEntries';
+import { useInvoices } from '@/hooks/useInvoices';
+import { useExpenses } from '@/hooks/useExpenses';
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 const Reports = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState('thisMonth');
-  const [dateFrom, setDateFrom] = useState<Date>();
-  const [dateTo, setDateTo] = useState<Date>();
+  const { projects } = useProjects();
+  const { timeEntries } = useTimeEntries();
+  const { invoices } = useInvoices();
+  const { expenses } = useExpenses();
 
-  // Calculate date ranges based on selected period
-  const getDateRange = () => {
-    const now = new Date();
-    
-    switch (selectedPeriod) {
-      case 'thisMonth':
-        return { start: startOfMonth(now), end: endOfMonth(now) };
-      case 'lastMonth':
-        const lastMonth = subMonths(now, 1);
-        return { start: startOfMonth(lastMonth), end: endOfMonth(lastMonth) };
-      case 'thisQuarter':
-        // Simplified - just use last 3 months
-        return { start: subMonths(startOfMonth(now), 2), end: endOfMonth(now) };
-      case 'thisYear':
-        return { start: startOfYear(now), end: endOfYear(now) };
-      case 'custom':
-        return { start: dateFrom, end: dateTo };
-      default:
-        return { start: startOfMonth(now), end: endOfMonth(now) };
-    }
-  };
-
-  const { start: periodStart, end: periodEnd } = getDateRange();
-  const { analytics, timeAnalytics, clientAnalytics, loading } = useAnalytics(periodStart, periodEnd);
-  const exportData = async () => {
-    if (!analytics) return;
-    
-    const exportContent = `Rapport - ${format(periodStart || new Date(), 'PPP', { locale: nl })} tot ${format(periodEnd || new Date(), 'PPP', { locale: nl })}
-
-Overzicht:
-- Totaal uren: ${formatHours(analytics.totalHours)}
-- Totaal omzet: ${formatCurrency(analytics.totalRevenue)}
-- Gemiddeld uurtarief: ${formatCurrency(analytics.averageHourlyRate)}
-- Facturen: ${analytics.totalInvoices} (${analytics.paidInvoices} betaald)
-- Openstaand: ${formatCurrency(analytics.outstandingAmount)}
-
-Beste klant: ${analytics.topClient || 'Geen data'}
-Populairste project: ${analytics.topProject || 'Geen data'}
-
-Klanten breakdown:
-${clientAnalytics.map(client => `- ${client.name}: ${formatHours(client.hours)} (${formatCurrency(client.revenue)})`).join('\n')}
-`;
-
-    const blob = new Blob([exportContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `rapport-${format(new Date(), 'yyyy-MM-dd')}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const COLORS = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--info))', 'hsl(var(--muted-foreground))'];
-
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <SidebarProvider>
-          <div className="flex min-h-screen w-full">
-            <AppSidebar />
-            <main className="flex-1 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </main>
-          </div>
-        </SidebarProvider>
-      </DashboardLayout>
-    );
-  }
-
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat('nl-NL', {
       style: 'currency',
       currency: 'EUR'
-    }).format(amount);
+    }).format(cents / 100);
   };
 
-  const formatHours = (hours: number) => {
-    const h = Math.floor(hours);
-    const m = Math.round((hours - h) * 60);
-    return m > 0 ? `${h}u ${m}m` : `${h}u`;
-  };
+  // Monthly revenue data
+  const monthlyData = useMemo(() => {
+    const last6Months = eachMonthOfInterval({
+      start: subMonths(new Date(), 5),
+      end: new Date()
+    });
+
+    return last6Months.map(month => {
+      const monthStart = startOfMonth(month);
+      const monthEnd = endOfMonth(month);
+
+      const revenue = invoices
+        .filter(inv => {
+          const date = new Date(inv.issue_date);
+          return date >= monthStart && date <= monthEnd && inv.status === 'PAID';
+        })
+        .reduce((sum, inv) => sum + inv.total_cents, 0);
+
+      const expensesTotal = expenses
+        .filter(exp => {
+          const date = new Date(exp.date);
+          return date >= monthStart && date <= monthEnd;
+        })
+        .reduce((sum, exp) => sum + exp.amount_cents, 0);
+
+      const hours = timeEntries
+        .filter(entry => {
+          const date = new Date(entry.date);
+          return date >= monthStart && date <= monthEnd && entry.status === 'APPROVED';
+        })
+        .reduce((sum, entry) => sum + entry.hours, 0);
+
+      return {
+        month: format(month, 'MMM', { locale: nl }),
+        omzet: revenue / 100,
+        kosten: expensesTotal / 100,
+        winst: (revenue - expensesTotal) / 100,
+        uren: hours,
+      };
+    });
+  }, [invoices, expenses, timeEntries]);
+
+  // Project profitability
+  const projectData = useMemo(() => {
+    return projects.map(project => {
+      const projectEntries = timeEntries.filter(e => e.project_id === project.id && e.status === 'APPROVED');
+      const totalHours = projectEntries.reduce((sum, e) => sum + e.hours, 0);
+      const revenue = totalHours * (project.hourly_rate || 0) / 100;
+      
+      const projectExpenses = expenses
+        .filter(e => e.project_id === project.id)
+        .reduce((sum, e) => sum + e.amount_cents, 0) / 100;
+
+      return {
+        name: project.name_i18n.nl,
+        uren: totalHours,
+        omzet: revenue,
+        kosten: projectExpenses,
+        winst: revenue - projectExpenses,
+      };
+    }).filter(p => p.uren > 0);
+  }, [projects, timeEntries, expenses]);
+
+  // Category expenses
+  const expensesByCategory = useMemo(() => {
+    const categoryTotals: { [key: string]: number } = {};
+    expenses.forEach(exp => {
+      categoryTotals[exp.category] = (categoryTotals[exp.category] || 0) + exp.amount_cents / 100;
+    });
+    return Object.entries(categoryTotals).map(([name, value]) => ({ name, value }));
+  }, [expenses]);
+
+  // Summary stats
+  const stats = useMemo(() => {
+    const totalRevenue = invoices
+      .filter(inv => inv.status === 'PAID')
+      .reduce((sum, inv) => sum + inv.total_cents, 0);
+
+    const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount_cents, 0);
+
+    const totalHours = timeEntries
+      .filter(e => e.status === 'APPROVED')
+      .reduce((sum, e) => sum + e.hours, 0);
+
+    const avgHourlyRate = totalHours > 0 ? totalRevenue / totalHours : 0;
+
+    return {
+      totalRevenue,
+      totalExpenses,
+      totalProfit: totalRevenue - totalExpenses,
+      totalHours,
+      avgHourlyRate,
+    };
+  }, [invoices, expenses, timeEntries]);
 
   return (
     <DashboardLayout>
@@ -127,307 +135,170 @@ ${clientAnalytics.map(client => `- ${client.name}: ${formatHours(client.hours)} 
               <div className="flex h-16 items-center gap-4 px-6">
                 <SidebarTrigger className="lg:hidden" />
                 <div className="flex-1">
-                  <h1 className="text-2xl font-semibold">Rapporten</h1>
+                  <h1 className="text-2xl font-semibold">Rapportages</h1>
                   <p className="text-muted-foreground">
-                    Inzicht in je prestaties en omzet
+                    Inzicht in je bedrijfsprestaties
                   </p>
                 </div>
-                <div className="flex gap-2">
-                  <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="thisMonth">Deze maand</SelectItem>
-                      <SelectItem value="lastMonth">Vorige maand</SelectItem>
-                      <SelectItem value="thisQuarter">Dit kwartaal</SelectItem>
-                      <SelectItem value="thisYear">Dit jaar</SelectItem>
-                      <SelectItem value="custom">Aangepaste periode</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button variant="outline" className="gap-2" onClick={exportData}>
-                    <Download className="h-4 w-4" />
-                    Exporteren
-                  </Button>
-                </div>
+                <Button variant="outline" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Export PDF
+                </Button>
               </div>
             </header>
 
             {/* Content */}
             <div className="flex-1 space-y-6 p-6">
-              {/* Custom Date Range */}
-              {selectedPeriod === 'custom' && (
+              {/* Summary Stats */}
+              <div className="grid gap-4 md:grid-cols-5">
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Aangepaste periode</CardTitle>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <Euro className="h-4 w-4" />
+                      Totale omzet
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex gap-4">
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-[240px] justify-start text-left font-normal",
-                              !dateFrom && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon />
-                            {dateFrom ? format(dateFrom, "PPP", { locale: nl }) : <span>Van datum</span>}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={dateFrom}
-                            onSelect={setDateFrom}
-                            initialFocus
-                            className={cn("p-3 pointer-events-auto")}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-[240px] justify-start text-left font-normal",
-                              !dateTo && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon />
-                            {dateTo ? format(dateTo, "PPP", { locale: nl }) : <span>Tot datum</span>}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={dateTo}
-                            onSelect={setDateTo}
-                            initialFocus
-                            className={cn("p-3 pointer-events-auto")}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
+                    <div className="text-2xl font-bold">{formatCurrency(stats.totalRevenue)}</div>
                   </CardContent>
                 </Card>
-              )}
-
-              {/* Key Metrics */}
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Totaal uren</CardTitle>
-                    <Clock className="h-4 w-4 text-muted-foreground" />
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <TrendingDown className="h-4 w-4" />
+                      Totale kosten
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">
-                      {analytics ? formatHours(analytics.totalHours) : '0u'}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Geselecteerde periode
-                    </p>
+                    <div className="text-2xl font-bold text-red-600">{formatCurrency(stats.totalExpenses)}</div>
                   </CardContent>
                 </Card>
-
                 <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Totaal omzet</CardTitle>
-                    <Euro className="h-4 w-4 text-muted-foreground" />
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4" />
+                      Totale winst
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">
-                      {analytics ? formatCurrency(analytics.totalRevenue) : '€0'}
-                    </div>
-                    <p className="text-xs text-success">
-                      {analytics ? formatCurrency(analytics.averageHourlyRate) : '€0'} gem. uurtarief
-                    </p>
+                    <div className="text-2xl font-bold text-green-600">{formatCurrency(stats.totalProfit)}</div>
                   </CardContent>
                 </Card>
-
                 <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Facturen</CardTitle>
-                    <FileText className="h-4 w-4 text-muted-foreground" />
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      Totale uren
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">
-                      {analytics ? analytics.totalInvoices : 0}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {analytics ? analytics.paidInvoices : 0} betaald • {analytics ? formatCurrency(analytics.outstandingAmount) : '€0'} openstaand
-                    </p>
+                    <div className="text-2xl font-bold">{stats.totalHours.toFixed(1)}u</div>
                   </CardContent>
                 </Card>
-
                 <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Gem. uurtarief</CardTitle>
-                    <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Gem. uurtarief
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">
-                      {analytics ? formatCurrency(analytics.averageHourlyRate) : '€0'}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Gebaseerd op alle projecten
-                    </p>
+                    <div className="text-2xl font-bold">{formatCurrency(stats.avgHourlyRate)}</div>
                   </CardContent>
                 </Card>
               </div>
 
-              {/* Charts and Analysis */}
-              <div className="grid gap-6 lg:grid-cols-2">
-                {/* Client Breakdown */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <PieChart className="h-5 w-5" />
-                      Klantenverdeling
-                    </CardTitle>
-                    <CardDescription>
-                      Omzet per klant in de geselecteerde periode
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {clientAnalytics.length > 0 ? (
-                      <div className="space-y-6">
-                        {/* Pie Chart */}
-                        <div className="h-[200px]">
-                          <ChartContainer
-                            config={{
-                              revenue: {
-                                label: "Omzet",
-                                color: "hsl(var(--primary))",
-                              },
-                            }}
-                            className="h-full"
-                          >
-                            <ResponsiveContainer width="100%" height="100%">
-                              <RechartsPieChart>
-                                <Pie
-                                  data={clientAnalytics.slice(0, 5)}
-                                  cx="50%"
-                                  cy="50%"
-                                  outerRadius={60}
-                                  dataKey="revenue"
-                                  nameKey="name"
-                                >
-                                  {clientAnalytics.slice(0, 5).map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                  ))}
-                                </Pie>
-                                <ChartTooltip content={<ChartTooltipContent />} />
-                              </RechartsPieChart>
-                            </ResponsiveContainer>
-                          </ChartContainer>
-                        </div>
-
-                        {/* Client List */}
-                        <div className="space-y-4">
-                          {clientAnalytics.slice(0, 5).map((client, index) => (
-                            <div key={index} className="space-y-2">
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="font-medium">{client.name}</span>
-                                <span>{client.percentage}%</span>
-                              </div>
-                              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                <span>{formatHours(client.hours)}</span>
-                                <span>{formatCurrency(client.revenue)}</span>
-                              </div>
-                              <div className="w-full bg-muted rounded-full h-2">
-                                <div 
-                                  className="h-2 rounded-full transition-all duration-300" 
-                                  style={{ 
-                                    width: `${client.percentage}%`,
-                                    backgroundColor: COLORS[index % COLORS.length]
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center text-muted-foreground py-8">
-                        Geen data beschikbaar voor deze periode
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Project Performance */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <BarChart3 className="h-5 w-5" />
-                      Projectprestaties
-                    </CardTitle>
-                    <CardDescription>
-                      Top projecten op basis van uren en omzet
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center text-muted-foreground py-8">
-                      <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>Projectprestaties worden binnenkort toegevoegd</p>
-                      <p className="text-sm">Deze sectie toont gedetailleerde project analytics</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Trends and Insights */}
+              {/* Monthly Revenue & Expenses */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5" />
-                    Trends & Inzichten
-                  </CardTitle>
-                  <CardDescription>
-                    Belangrijke trends en aanbevelingen
-                  </CardDescription>
+                  <CardTitle>Omzet & Kosten (laatste 6 maanden)</CardTitle>
+                  <CardDescription>Maandelijks overzicht van inkomsten en uitgaven</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <div className="font-medium">Beste klant</div>
-                      <div className="text-2xl font-bold text-primary">
-                        {analytics?.topClient || 'Geen data'}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {clientAnalytics[0]?.percentage || 0}% van je totale omzet deze periode
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="font-medium">Populairste project</div>
-                      <div className="text-2xl font-bold text-primary">
-                        {analytics?.topProject || 'Geen data'}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Meeste uren besteed aan dit project
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-                    <h4 className="font-medium mb-2">Aanbevelingen</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1">
-                      {analytics && analytics.totalRevenue > 0 && (
-                        <li>• Je gemiddelde uurtarief is {formatCurrency(analytics.averageHourlyRate)}</li>
-                      )}
-                      {analytics?.topClient && (
-                        <li>• {analytics.topClient} is je beste klant - investeer in deze relatie</li>
-                      )}
-                      {analytics && analytics.outstandingAmount > 0 && (
-                        <li>• Je hebt {formatCurrency(analytics.outstandingAmount)} openstaand - stuur herinneringen</li>
-                      )}
-                      {(!analytics || analytics.totalHours === 0) && (
-                        <li>• Begin met het registreren van je tijd om inzichten te krijgen</li>
-                      )}
-                    </ul>
-                  </div>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={monthlyData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip formatter={(value) => `€${value}`} />
+                      <Legend />
+                      <Bar dataKey="omzet" fill="#00C49F" name="Omzet" />
+                      <Bar dataKey="kosten" fill="#FF8042" name="Kosten" />
+                      <Bar dataKey="winst" fill="#0088FE" name="Winst" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Project Profitability */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Winstgevendheid per project</CardTitle>
+                    <CardDescription>Omzet en kosten per project</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={projectData} layout="horizontal">
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" />
+                        <YAxis dataKey="name" type="category" width={100} />
+                        <Tooltip formatter={(value) => `€${value}`} />
+                        <Legend />
+                        <Bar dataKey="omzet" fill="#00C49F" name="Omzet" />
+                        <Bar dataKey="kosten" fill="#FF8042" name="Kosten" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                {/* Expenses by Category */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Onkosten per categorie</CardTitle>
+                    <CardDescription>Verdeling van zakelijke uitgaven</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={expensesByCategory}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={(entry) => `${entry.name}: €${entry.value.toFixed(0)}`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {expensesByCategory.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => `€${value}`} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Hours Trend */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Gewerkte uren trend</CardTitle>
+                  <CardDescription>Goedgekeurde uren per maand</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LineChart data={monthlyData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="uren" stroke="#8884d8" name="Uren" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </CardContent>
               </Card>
             </div>

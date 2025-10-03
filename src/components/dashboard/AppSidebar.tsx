@@ -1,4 +1,4 @@
-import { Clock, Users, FileText, FolderOpen, Settings, BarChart3, Home, CheckCircle } from 'lucide-react';
+import { Clock, Users, FileText, FolderOpen, Settings, BarChart3, Home, CheckCircle, Receipt } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -42,14 +42,19 @@ const menuItems = [
     icon: FileText 
   },
   { 
-    title: 'Goedkeuringen', 
-    url: '/dashboard/approvals', 
-    icon: CheckCircle 
+    title: 'Onkosten', 
+    url: '/dashboard/expenses', 
+    icon: Receipt 
   },
   { 
     title: 'Rapporten', 
     url: '/dashboard/reports', 
     icon: BarChart3 
+  },
+  { 
+    title: 'Goedkeuringen', 
+    url: '/dashboard/approvals', 
+    icon: CheckCircle 
   },
 ];
 
