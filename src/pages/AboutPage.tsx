@@ -2,12 +2,16 @@ import React from 'react';
 import { ArrowRight, CheckCircle, Users, BarChart, Clock, Shield, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { Header } from '@/components/Layout/Header';
+import { Footer } from '@/components/Footer/Footer';
 
 export const AboutPage: React.FC = () => {
   return (
-    <>
-      {/* Hero Section */}
-      <section className="bg-gradient-to-b from-background to-muted/30 py-20">
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-1">
+        {/* Hero Section */}
+        <section className="bg-gradient-to-b from-background to-muted/30 py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-6">Over ProAspect</h1>
@@ -222,24 +226,30 @@ export const AboutPage: React.FC = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 bg-primary/10">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-6">Klaar om tijd te besparen?</h2>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Sluit je aan bij duizenden tevreden klanten en ontdek hoe ProAspect jouw administratie kan vereenvoudigen.
-          </p>
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Button size="lg">
-              Gratis uitproberen
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="lg">
-              Demo aanvragen
-            </Button>
+        {/* CTA Section */}
+        <section className="py-16 bg-primary/10">
+          <div className="container mx-auto px-4 text-center">
+            <h2 className="text-3xl font-bold mb-6">Klaar om tijd te besparen?</h2>
+            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Sluit je aan bij duizenden tevreden klanten en ontdek hoe ProAspect jouw administratie kan vereenvoudigen.
+            </p>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Link to="/register">
+                <Button size="lg">
+                  Gratis uitproberen
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link to="/contact">
+                <Button variant="outline" size="lg">
+                  Demo aanvragen
+                </Button>
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
-    </>
+        </section>
+      </main>
+      <Footer />
+    </div>
   );
 };
