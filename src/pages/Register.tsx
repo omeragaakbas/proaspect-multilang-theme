@@ -11,6 +11,32 @@ import { Separator } from '@/components/ui/separator';
 import { Mail, Lock, User, Building, ArrowRight, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { z } from 'zod';
+
+const registerSchema = z.object({
+  email: z.string()
+    .trim()
+    .email('Ongeldig e-mailadres')
+    .max(255, 'E-mailadres mag maximaal 255 tekens zijn'),
+  password: z.string()
+    .min(8, 'Wachtwoord moet minimaal 8 tekens zijn')
+    .max(100, 'Wachtwoord mag maximaal 100 tekens zijn')
+    .regex(/[A-Z]/, 'Wachtwoord moet minimaal één hoofdletter bevatten')
+    .regex(/[a-z]/, 'Wachtwoord moet minimaal één kleine letter bevatten')
+    .regex(/[0-9]/, 'Wachtwoord moet minimaal één cijfer bevatten'),
+  confirmPassword: z.string(),
+  name: z.string()
+    .trim()
+    .min(1, 'Naam is verplicht')
+    .max(100, 'Naam mag maximaal 100 tekens zijn'),
+  companyName: z.string()
+    .trim()
+    .min(1, 'Bedrijfsnaam is verplicht')
+    .max(200, 'Bedrijfsnaam mag maximaal 200 tekens zijn')
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Wachtwoorden komen niet overeen",
+  path: ["confirmPassword"],
+});
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -35,48 +61,50 @@ const Register = () => {
     e.preventDefault();
     setError(null);
 
-    // Validation
-    if (formData.password !== formData.confirmPassword) {
-      setError('Wachtwoorden komen niet overeen');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Wachtwoord moet minimaal 6 tekens lang zijn');
-      return;
-    }
-
-    if (!formData.name || !formData.email || !formData.companyName) {
-      setError('Vul alle verplichte velden in');
-      return;
-    }
-
-    setLoading(true);
-
-    const userData = {
-      name: formData.name,
-      companyName: formData.companyName,
-      kvk: formData.kvk || null,
-      vatNumber: formData.vatNumber || null,
-      iban: formData.iban || null,
-      defaultHourlyRate: parseInt(formData.defaultHourlyRate) * 100, // convert to cents
-      preferredLocale: formData.preferredLocale,
-      uiTheme: formData.uiTheme,
-      role: 'CONTRACTOR'
-    };
-
-    const { error } = await signUp(formData.email, formData.password, userData);
-
-    setLoading(false);
-
-    if (error) {
-      setError(error.message);
-    } else {
-      navigate('/login', { 
-        state: { 
-          message: 'Registratie succesvol! Check je e-mail voor de verificatielink.' 
-        }
+    try {
+      // Validate inputs with zod
+      const validatedData = registerSchema.parse({
+        email: formData.email.trim(),
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+        name: formData.name.trim(),
+        companyName: formData.companyName.trim()
       });
+
+      setLoading(true);
+
+      const userData = {
+        name: validatedData.name,
+        companyName: validatedData.companyName,
+        kvk: formData.kvk || null,
+        vatNumber: formData.vatNumber || null,
+        iban: formData.iban || null,
+        defaultHourlyRate: parseInt(formData.defaultHourlyRate) * 100, // convert to cents
+        preferredLocale: formData.preferredLocale,
+        uiTheme: formData.uiTheme,
+        role: 'CONTRACTOR'
+      };
+
+      const { error } = await signUp(validatedData.email, validatedData.password, userData);
+
+      setLoading(false);
+
+      if (error) {
+        setError(error.message);
+      } else {
+        navigate('/login', { 
+          state: { 
+            message: 'Registratie succesvol! Check je e-mail voor de verificatielink.' 
+          }
+        });
+      }
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        setError(err.errors[0].message);
+      } else {
+        setError('Er is een fout opgetreden');
+      }
+      setLoading(false);
     }
   };
 

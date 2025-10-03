@@ -10,6 +10,17 @@ import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Mail, Lock, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { z } from 'zod';
+
+const loginSchema = z.object({
+  email: z.string()
+    .trim()
+    .email('Ongeldig e-mailadres')
+    .max(255, 'E-mailadres mag maximaal 255 tekens zijn'),
+  password: z.string()
+    .min(6, 'Wachtwoord moet minimaal 6 tekens zijn')
+    .max(100, 'Wachtwoord mag maximaal 100 tekens zijn')
+});
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -25,22 +36,31 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setLoading(true);
 
-    if (!email || !password) {
-      setError('Vul alle velden in');
+    try {
+      // Validate inputs with zod
+      const validatedData = loginSchema.parse({
+        email: email.trim(),
+        password
+      });
+
+      setLoading(true);
+
+      const { error } = await signIn(validatedData.email, validatedData.password);
+
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+      } else {
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        setError(err.errors[0].message);
+      } else {
+        setError('Er is een fout opgetreden');
+      }
       setLoading(false);
-      return;
-    }
-
-    const { error } = await signIn(email, password);
-
-    setLoading(false);
-
-    if (error) {
-      setError(error.message);
-    } else {
-      navigate('/dashboard');
     }
   };
 

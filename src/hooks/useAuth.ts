@@ -8,11 +8,17 @@ export interface Profile {
   user_id: string;
   name: string;
   email: string;
-  role: 'ADMIN' | 'CONTRACTOR';
   preferred_locale: 'nl' | 'en' | 'tr';
   ui_theme: 'LIGHT' | 'DARK' | 'SYSTEM';
   created_at: string;
   updated_at: string;
+}
+
+export interface UserRole {
+  id: string;
+  user_id: string;
+  role: 'ADMIN' | 'CONTRACTOR';
+  created_at: string;
 }
 
 export interface ContractorProfile {
@@ -34,6 +40,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
+  userRole: UserRole | null;
   contractorProfile: ContractorProfile | null;
   loading: boolean;
   signUp: (email: string, password: string, userData: any) => Promise<{ error: AuthError | null }>;
@@ -56,6 +63,7 @@ export function useAuthProvider(): AuthContextType {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [contractorProfile, setContractorProfile] = useState<ContractorProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -74,6 +82,7 @@ export function useAuthProvider(): AuthContextType {
           }, 0);
         } else {
           setProfile(null);
+          setUserRole(null);
           setContractorProfile(null);
         }
         setLoading(false);
@@ -104,16 +113,32 @@ export function useAuthProvider(): AuthContextType {
       if (profileError) throw profileError;
       setProfile(profileData);
 
-      // If user is a contractor, fetch contractor profile
-      if (profileData?.role === 'CONTRACTOR') {
-        const { data: contractorData, error: contractorError } = await supabase
-          .from('contractor_profiles')
-          .select('*')
-          .eq('user_id', userId)
-          .single();
+      // Fetch user role from user_roles table
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
 
-        if (contractorError) throw contractorError;
-        setContractorProfile(contractorData);
+      if (roleError) {
+        console.error('Error fetching role:', roleError);
+      } else {
+        setUserRole(roleData);
+
+        // If user is a contractor, fetch contractor profile
+        if (roleData?.role === 'CONTRACTOR') {
+          const { data: contractorData, error: contractorError } = await supabase
+            .from('contractor_profiles')
+            .select('*')
+            .eq('user_id', userId)
+            .single();
+
+          if (contractorError) {
+            console.error('Error fetching contractor profile:', contractorError);
+          } else {
+            setContractorProfile(contractorData);
+          }
+        }
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -165,6 +190,7 @@ export function useAuthProvider(): AuthContextType {
       setUser(null);
       setSession(null);
       setProfile(null);
+      setUserRole(null);
       setContractorProfile(null);
       toast({
         title: "Tot ziens!",
@@ -204,6 +230,7 @@ export function useAuthProvider(): AuthContextType {
     user,
     session,
     profile,
+    userRole,
     contractorProfile,
     loading,
     signUp,
