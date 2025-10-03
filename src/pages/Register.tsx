@@ -81,8 +81,9 @@ const Register = () => {
         iban: formData.iban || null,
         defaultHourlyRate: parseInt(formData.defaultHourlyRate) * 100, // convert to cents
         preferredLocale: formData.preferredLocale,
-        uiTheme: formData.uiTheme,
-        role: 'CONTRACTOR'
+        uiTheme: formData.uiTheme
+        // Note: Role is now ALWAYS set to CONTRACTOR on server side for security
+        // Only admins can assign other roles via admin functions
       };
 
       const { error } = await signUp(validatedData.email, validatedData.password, userData);

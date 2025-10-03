@@ -511,7 +511,6 @@ export type Database = {
           preferred_locale: Database["public"]["Enums"]["locale"] | null
           preferred_locations: string[] | null
           reliability_score: number | null
-          role: Database["public"]["Enums"]["app_role"] | null
           roles: string[] | null
           show_last_seen: boolean | null
           show_online: boolean | null
@@ -539,7 +538,6 @@ export type Database = {
           preferred_locale?: Database["public"]["Enums"]["locale"] | null
           preferred_locations?: string[] | null
           reliability_score?: number | null
-          role?: Database["public"]["Enums"]["app_role"] | null
           roles?: string[] | null
           show_last_seen?: boolean | null
           show_online?: boolean | null
@@ -567,7 +565,6 @@ export type Database = {
           preferred_locale?: Database["public"]["Enums"]["locale"] | null
           preferred_locations?: string[] | null
           reliability_score?: number | null
-          role?: Database["public"]["Enums"]["app_role"] | null
           roles?: string[] | null
           show_last_seen?: boolean | null
           show_online?: boolean | null

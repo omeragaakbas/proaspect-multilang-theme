@@ -12,6 +12,7 @@ export interface Profile {
   ui_theme: 'LIGHT' | 'DARK' | 'SYSTEM';
   created_at: string;
   updated_at: string;
+  // Note: role is now stored in user_roles table, not here
 }
 
 export interface UserRole {
