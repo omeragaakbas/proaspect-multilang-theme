@@ -16,6 +16,9 @@ import Approvals from "./pages/dashboard/Approvals";
 import Reports from "./pages/dashboard/Reports";
 import Settings from "./pages/dashboard/Settings";
 import Expenses from "./pages/dashboard/Expenses";
+import Team from "./pages/dashboard/Team";
+import ClientPortal from "./pages/dashboard/ClientPortal";
+import ClientPortalView from "./pages/ClientPortalView";
 import NotFound from "./pages/NotFound";
 import { AboutPage } from "./pages/AboutPage";
 import { ContactPage } from "./pages/ContactPage";
@@ -50,7 +53,10 @@ const App = () => (
             <Route path="/dashboard/expenses" element={<Expenses />} />
             <Route path="/dashboard/approvals" element={<Approvals />} />
             <Route path="/dashboard/reports" element={<Reports />} />
+            <Route path="/dashboard/team" element={<Team />} />
+            <Route path="/dashboard/client-portal" element={<ClientPortal />} />
             <Route path="/dashboard/settings" element={<Settings />} />
+            <Route path="/client-portal" element={<ClientPortalView />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

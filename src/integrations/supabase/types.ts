@@ -83,6 +83,44 @@ export type Database = {
         }
         Relationships: []
       }
+      client_access_tokens: {
+        Row: {
+          client_id: string
+          created_at: string
+          email: string
+          expires_at: string | null
+          id: string
+          last_used_at: string | null
+          token: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          email: string
+          expires_at?: string | null
+          id?: string
+          last_used_at?: string | null
+          token?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          email?: string
+          expires_at?: string | null
+          id?: string
+          last_used_at?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_access_tokens_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address_json: Json | null
@@ -132,6 +170,7 @@ export type Database = {
           id: string
           invoice_prefix: string | null
           kvk: string | null
+          team_owner_id: string | null
           timezone: string
           updated_at: string
           user_id: string
@@ -146,6 +185,7 @@ export type Database = {
           id?: string
           invoice_prefix?: string | null
           kvk?: string | null
+          team_owner_id?: string | null
           timezone?: string
           updated_at?: string
           user_id: string
@@ -160,6 +200,7 @@ export type Database = {
           id?: string
           invoice_prefix?: string | null
           kvk?: string | null
+          team_owner_id?: string | null
           timezone?: string
           updated_at?: string
           user_id?: string
@@ -350,6 +391,8 @@ export type Database = {
       }
       invoices: {
         Row: {
+          client_approved_at: string | null
+          client_approved_by: string | null
           client_id: string
           contractor_id: string
           created_at: string
@@ -375,6 +418,8 @@ export type Database = {
           viewed_at: string | null
         }
         Insert: {
+          client_approved_at?: string | null
+          client_approved_by?: string | null
           client_id: string
           contractor_id: string
           created_at?: string
@@ -400,6 +445,8 @@ export type Database = {
           viewed_at?: string | null
         }
         Update: {
+          client_approved_at?: string | null
+          client_approved_by?: string | null
           client_id?: string
           contractor_id?: string
           created_at?: string
@@ -817,6 +864,39 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      team_invitations: {
+        Row: {
+          accepted_at: string | null
+          contractor_id: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          contractor_id: string
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          contractor_id?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          token?: string
+        }
+        Relationships: []
       }
       time_entries: {
         Row: {

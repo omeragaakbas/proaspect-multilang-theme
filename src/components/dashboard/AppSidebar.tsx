@@ -1,4 +1,4 @@
-import { Clock, Users, FileText, FolderOpen, Settings, BarChart3, Home, CheckCircle, Receipt } from 'lucide-react';
+import { Clock, Users, FileText, FolderOpen, Settings, BarChart3, Home, CheckCircle, Receipt, Key } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -58,6 +58,19 @@ const menuItems = [
   },
 ];
 
+const collaborationItems = [
+  { 
+    title: 'Team', 
+    url: '/dashboard/team', 
+    icon: Users 
+  },
+  { 
+    title: 'Client Portal', 
+    url: '/dashboard/client-portal', 
+    icon: Key 
+  },
+];
+
 const settingsItems = [
   { 
     title: 'Instellingen', 
@@ -99,6 +112,28 @@ export function AppSidebar() {
                     <NavLink 
                       to={item.url} 
                       end={item.exact}
+                      className={({ isActive }) => getNavClasses(isActive)}
+                    >
+                      <item.icon className="mr-2 h-4 w-4" />
+                      <span>{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Collaboration */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Samenwerking</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {collaborationItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink 
+                      to={item.url}
                       className={({ isActive }) => getNavClasses(isActive)}
                     >
                       <item.icon className="mr-2 h-4 w-4" />
