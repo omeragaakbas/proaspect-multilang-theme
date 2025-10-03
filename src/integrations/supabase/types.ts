@@ -519,12 +519,16 @@ export type Database = {
           notes: string | null
           paid_at: string | null
           payment_intent_id: string | null
+          payment_link: string | null
           payment_method: string | null
           payment_terms: string | null
           pdf_url: string | null
+          recurring_invoice_id: string | null
           reminder_sent_at: string | null
           sent_at: string | null
           status: string
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
           subtotal_cents: number
           total_cents: number
           ubl_url: string | null
@@ -548,12 +552,16 @@ export type Database = {
           notes?: string | null
           paid_at?: string | null
           payment_intent_id?: string | null
+          payment_link?: string | null
           payment_method?: string | null
           payment_terms?: string | null
           pdf_url?: string | null
+          recurring_invoice_id?: string | null
           reminder_sent_at?: string | null
           sent_at?: string | null
           status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
           subtotal_cents?: number
           total_cents?: number
           ubl_url?: string | null
@@ -577,12 +585,16 @@ export type Database = {
           notes?: string | null
           paid_at?: string | null
           payment_intent_id?: string | null
+          payment_link?: string | null
           payment_method?: string | null
           payment_terms?: string | null
           pdf_url?: string | null
+          recurring_invoice_id?: string | null
           reminder_sent_at?: string | null
           sent_at?: string | null
           status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
           subtotal_cents?: number
           total_cents?: number
           ubl_url?: string | null
@@ -597,6 +609,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_recurring_invoice_id_fkey"
+            columns: ["recurring_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_invoices"
             referencedColumns: ["id"]
           },
         ]
@@ -898,6 +917,75 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recurring_invoices: {
+        Row: {
+          client_id: string
+          contractor_id: string
+          created_at: string
+          end_date: string | null
+          frequency: string
+          id: string
+          is_active: boolean
+          last_generated_at: string | null
+          next_invoice_date: string
+          notes: string | null
+          payment_terms: string | null
+          start_date: string
+          template_id: string | null
+          updated_at: string
+          vat_rate: number | null
+        }
+        Insert: {
+          client_id: string
+          contractor_id: string
+          created_at?: string
+          end_date?: string | null
+          frequency: string
+          id?: string
+          is_active?: boolean
+          last_generated_at?: string | null
+          next_invoice_date: string
+          notes?: string | null
+          payment_terms?: string | null
+          start_date: string
+          template_id?: string | null
+          updated_at?: string
+          vat_rate?: number | null
+        }
+        Update: {
+          client_id?: string
+          contractor_id?: string
+          created_at?: string
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          last_generated_at?: string | null
+          next_invoice_date?: string
+          notes?: string | null
+          payment_terms?: string | null
+          start_date?: string
+          template_id?: string | null
+          updated_at?: string
+          vat_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_invoices_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_templates"
             referencedColumns: ["id"]
           },
         ]

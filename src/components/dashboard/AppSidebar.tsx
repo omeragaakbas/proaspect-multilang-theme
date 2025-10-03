@@ -1,4 +1,4 @@
-import { Clock, Users, FileText, FolderOpen, Settings, BarChart3, Home, CheckCircle, Receipt, Key, Shield, Lock } from 'lucide-react';
+import { Clock, Users, FileText, FolderOpen, Settings, BarChart3, Home, CheckCircle, Receipt, Key, Shield, Lock, RefreshCw } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -40,6 +40,11 @@ const menuItems = [
     title: 'Facturen', 
     url: '/dashboard/invoices', 
     icon: FileText 
+  },
+  { 
+    title: 'Terugkerende Facturen', 
+    url: '/dashboard/recurring-invoices', 
+    icon: RefreshCw 
   },
   { 
     title: 'Onkosten', 
