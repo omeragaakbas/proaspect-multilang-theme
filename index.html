@@ -1,11 +1,22 @@
 <!doctype html>
-<html lang="en">
+<html lang="nl">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
     <title>ProAspect - Time & Invoicing voor ZZP'ers</title>
     <meta name="description" content="Professionele tijd- en facturatieoplossing voor Nederlandse ZZP'ers. Automatiseer je workflow van tijdregistratie tot factuur." />
     <meta name="author" content="ProAspect" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="ProAspect" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icons/icon-512x512.png" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/icons/icon-512x512.png" />
 
     <meta property="og:title" content="ProAspect - Time & Invoicing voor ZZP'ers" />
     <meta property="og:description" content="Professionele tijd- en facturatieoplossing voor Nederlandse ZZP'ers. Automatiseer je workflow van tijdregistratie tot factuur." />
@@ -20,5 +31,20 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('Service Worker registered successfully:', registration.scope);
+            })
+            .catch((error) => {
+              console.log('Service Worker registration failed:', error);
+            });
+        });
+      }
+    </script>
   </body>
 </html>

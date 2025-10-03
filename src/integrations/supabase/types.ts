@@ -170,6 +170,7 @@ export type Database = {
           id: string
           invoice_prefix: string | null
           kvk: string | null
+          notification_preferences: Json | null
           team_owner_id: string | null
           timezone: string
           updated_at: string
@@ -185,6 +186,7 @@ export type Database = {
           id?: string
           invoice_prefix?: string | null
           kvk?: string | null
+          notification_preferences?: Json | null
           team_owner_id?: string | null
           timezone?: string
           updated_at?: string
@@ -200,6 +202,7 @@ export type Database = {
           id?: string
           invoice_prefix?: string | null
           kvk?: string | null
+          notification_preferences?: Json | null
           team_owner_id?: string | null
           timezone?: string
           updated_at?: string
@@ -401,12 +404,14 @@ export type Database = {
           id: string
           invoice_number: string
           issue_date: string
+          last_reminder_at: string | null
           notes: string | null
           paid_at: string | null
           payment_intent_id: string | null
           payment_method: string | null
           payment_terms: string | null
           pdf_url: string | null
+          reminder_sent_at: string | null
           sent_at: string | null
           status: string
           subtotal_cents: number
@@ -428,12 +433,14 @@ export type Database = {
           id?: string
           invoice_number: string
           issue_date?: string
+          last_reminder_at?: string | null
           notes?: string | null
           paid_at?: string | null
           payment_intent_id?: string | null
           payment_method?: string | null
           payment_terms?: string | null
           pdf_url?: string | null
+          reminder_sent_at?: string | null
           sent_at?: string | null
           status?: string
           subtotal_cents?: number
@@ -455,12 +462,14 @@ export type Database = {
           id?: string
           invoice_number?: string
           issue_date?: string
+          last_reminder_at?: string | null
           notes?: string | null
           paid_at?: string | null
           payment_intent_id?: string | null
           payment_method?: string | null
           payment_terms?: string | null
           pdf_url?: string | null
+          reminder_sent_at?: string | null
           sent_at?: string | null
           status?: string
           subtotal_cents?: number
