@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { AppSidebar } from '@/components/dashboard/AppSidebar';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
