@@ -25,21 +25,21 @@ export const Header: React.FC = () => {
           {user && (
             <>
               <Link 
-                to="/time" 
+                to="/dashboard/time" 
                 className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 <Clock className="h-4 w-4" />
                 Tijdregistratie
               </Link>
               <Link 
-                to="/clients" 
+                to="/dashboard/clients" 
                 className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 <Users className="h-4 w-4" />
                 Klanten
               </Link>
               <Link 
-                to="/invoices" 
+                to="/dashboard/invoices" 
                 className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 <FileText className="h-4 w-4" />
@@ -54,7 +54,7 @@ export const Header: React.FC = () => {
             <>
               {user ? (
                 <>
-                  <Link to="/settings">
+                  <Link to="/dashboard/settings">
                     <Button variant="ghost" size="icon">
                       <Settings className="h-4 w-4" />
                     </Button>

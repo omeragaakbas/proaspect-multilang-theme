@@ -267,9 +267,13 @@ const Dashboard = () => {
           {/* Recent Time Entries */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
+               <CardTitle className="flex items-center justify-between">
                 Recente Tijdregistraties
-                <Button variant="ghost" size="sm">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => navigate('/dashboard/time')}
+                >
                   Alle bekijken
                   <ArrowUpRight className="ml-1 h-4 w-4" />
                 </Button>
@@ -318,7 +322,11 @@ const Dashboard = () => {
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 Recente Facturen
-                <Button variant="ghost" size="sm">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => navigate('/dashboard/invoices')}
+                >
                   Alle bekijken
                   <ArrowUpRight className="ml-1 h-4 w-4" />
                 </Button>
