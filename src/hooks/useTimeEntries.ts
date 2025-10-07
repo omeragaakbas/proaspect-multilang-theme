@@ -112,7 +112,7 @@ export function useTimeEntries() {
   });
 
   const updateTimeEntry = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: 'SUBMITTED' | 'APPROVED' | 'REJECTED'; rejection_reason?: string }) => {
+    mutationFn: async ({ id, status, rejection_reason }: { id: string; status: 'SUBMITTED' | 'APPROVED' | 'REJECTED'; rejection_reason?: string }) => {
       const updates: any = { status };
       
       if (status === 'SUBMITTED') {
@@ -121,6 +121,9 @@ export function useTimeEntries() {
         updates.approved_at = new Date().toISOString();
       } else if (status === 'REJECTED') {
         updates.rejected_at = new Date().toISOString();
+        if (rejection_reason) {
+          updates.rejection_reason = rejection_reason;
+        }
       }
 
       const { data, error } = await supabase

@@ -28,86 +28,51 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-
-interface TimeEntrySubmission {
-  id: string;
-  contractor_name: string;
-  contractor_email: string;
-  project_name: string;
-  client_name: string;
-  date: string;
-  hours: number;
-  description: string;
-  status: 'SUBMITTED' | 'APPROVED' | 'REJECTED';
-  submitted_at: string;
-  approved_at?: string;
-  rejected_at?: string;
-  rejection_reason?: string;
-}
+import { useTimeEntries } from '@/hooks/useTimeEntries';
+import { useToast } from '@/hooks/use-toast';
 
 const Approvals = () => {
-  const [selectedEntry, setSelectedEntry] = useState<TimeEntrySubmission | null>(null);
+  const { timeEntries, isLoading, updateTimeEntry } = useTimeEntries();
+  const { toast } = useToast();
+  
+  const [selectedEntry, setSelectedEntry] = useState<any>(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [showRejectDialog, setShowRejectDialog] = useState(false);
 
-  // Mock data - will be replaced with real data from Supabase
-  const submissions: TimeEntrySubmission[] = [
-    {
-      id: '1',
-      contractor_name: 'John Doe',
-      contractor_email: 'john@example.com',
-      project_name: 'Website redesign',
-      client_name: 'ACME Corporation',
-      date: '2024-01-25',
-      hours: 8.5,
-      description: 'Completed homepage design and responsive layout implementation. Fixed mobile navigation issues and optimized images for better performance.',
-      status: 'SUBMITTED',
-      submitted_at: '2024-01-25T17:30:00Z'
-    },
-    {
-      id: '2',
-      contractor_name: 'Jane Smith',
-      contractor_email: 'jane@example.com',
-      project_name: 'API Development',
-      client_name: 'TechStart BV',
-      date: '2024-01-24',
-      hours: 6.0,
-      description: 'Implemented user authentication endpoints and database schema updates.',
-      status: 'SUBMITTED',
-      submitted_at: '2024-01-24T18:15:00Z'
-    },
-    {
-      id: '3',
-      contractor_name: 'Mike Johnson',
-      contractor_email: 'mike@example.com',
-      project_name: 'Database Optimization',
-      client_name: 'DataCorp NL',
-      date: '2024-01-23',
-      hours: 4.0,
-      description: 'Query optimization and indexing improvements.',
-      status: 'APPROVED',
-      submitted_at: '2024-01-23T16:45:00Z',
-      approved_at: '2024-01-24T09:00:00Z'
-    }
-  ];
-
-  const pendingSubmissions = submissions.filter(s => s.status === 'SUBMITTED');
-  const processedSubmissions = submissions.filter(s => s.status !== 'SUBMITTED');
+  const pendingSubmissions = timeEntries.filter(s => s.status === 'SUBMITTED');
+  const processedSubmissions = timeEntries.filter(s => ['APPROVED', 'REJECTED'].includes(s.status));
 
   const handleApprove = (entryId: string) => {
-    console.log('Approving entry:', entryId);
-    // Implementation will connect to Supabase
+    updateTimeEntry({
+      id: entryId,
+      status: 'APPROVED',
+    });
+    
+    toast({
+      title: 'Tijdsregistratie goedgekeurd',
+      description: 'De tijdsregistratie is goedgekeurd.',
+    });
   };
 
   const handleReject = (entryId: string) => {
-    setSelectedEntry(submissions.find(s => s.id === entryId) || null);
+    setSelectedEntry(timeEntries.find(s => s.id === entryId) || null);
     setShowRejectDialog(true);
   };
 
   const handleRejectSubmit = () => {
     if (selectedEntry && rejectionReason.trim()) {
-      console.log('Rejecting entry:', selectedEntry.id, 'Reason:', rejectionReason);
-      // Implementation will connect to Supabase
+      updateTimeEntry({
+        id: selectedEntry.id,
+        status: 'REJECTED',
+        rejection_reason: rejectionReason,
+      });
+      
+      toast({
+        title: 'Tijdsregistratie afgewezen',
+        description: 'De tijdsregistratie is afgewezen.',
+        variant: 'destructive',
+      });
+      
       setShowRejectDialog(false);
       setRejectionReason('');
       setSelectedEntry(null);
@@ -180,32 +145,39 @@ const Approvals = () => {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {pendingSubmissions.map((submission) => (
-                        <div key={submission.id} className="border rounded-lg p-4 space-y-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-start gap-3">
-                              <div className="p-2 bg-amber-100 rounded-lg">
-                                <User className="h-5 w-5 text-amber-600" />
-                              </div>
-                              <div>
-                                <div className="font-medium">{submission.contractor_name}</div>
-                                <div className="text-sm text-muted-foreground">{submission.contractor_email}</div>
-                                <div className="text-sm text-muted-foreground">
-                                  Ingediend: {format(new Date(submission.submitted_at), 'dd MMM yyyy, HH:mm', { locale: nl })}
+                      {pendingSubmissions.map((submission) => {
+                        const projectName = submission.project && typeof submission.project.name_i18n === 'object'
+                          ? submission.project.name_i18n.nl || submission.project.name_i18n.en || submission.project.name_i18n.tr
+                          : '';
+                        const clientName = submission.project?.client && typeof submission.project.client.name_i18n === 'object'
+                          ? submission.project.client.name_i18n.nl || submission.project.client.name_i18n.en || submission.project.client.name_i18n.tr
+                          : '';
+                        
+                        return (
+                          <div key={submission.id} className="border rounded-lg p-4 space-y-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-start gap-3">
+                                <div className="p-2 bg-amber-100 rounded-lg">
+                                  <User className="h-5 w-5 text-amber-600" />
+                                </div>
+                                <div>
+                                  <div className="font-medium">Tijdsregistratie</div>
+                                  <div className="text-sm text-muted-foreground">
+                                    Ingediend: {format(new Date(submission.submitted_at), 'dd MMM yyyy, HH:mm', { locale: nl })}
+                                  </div>
                                 </div>
                               </div>
+                              <Badge variant="outline" className="gap-1">
+                                <Clock className="h-3 w-3" />
+                                Wachtend
+                              </Badge>
                             </div>
-                            <Badge variant="outline" className="gap-1">
-                              <Clock className="h-3 w-3" />
-                              Wachtend
-                            </Badge>
-                          </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                             <div>
                               <div className="font-medium text-muted-foreground">Project</div>
-                              <div>{submission.project_name}</div>
-                              <div className="text-muted-foreground">{submission.client_name}</div>
+                              <div>{projectName}</div>
+                              <div className="text-muted-foreground">{clientName}</div>
                             </div>
                             <div>
                               <div className="font-medium text-muted-foreground">Datum</div>
@@ -216,14 +188,16 @@ const Approvals = () => {
                             </div>
                             <div>
                               <div className="font-medium text-muted-foreground">Uren</div>
-                              <div className="font-semibold">{formatDuration(submission.hours)}</div>
+                              <div className="font-semibold">{formatDuration(Number(submission.hours))}</div>
                             </div>
                           </div>
 
-                          <div>
-                            <div className="font-medium text-muted-foreground mb-2">Beschrijving</div>
-                            <p className="text-sm bg-muted/50 p-3 rounded-lg">{submission.description}</p>
-                          </div>
+                          {submission.description && (
+                            <div>
+                              <div className="font-medium text-muted-foreground mb-2">Beschrijving</div>
+                              <p className="text-sm bg-muted/50 p-3 rounded-lg">{submission.description}</p>
+                            </div>
+                          )}
 
                           <div className="flex gap-2 pt-2">
                             <Button 
@@ -244,13 +218,10 @@ const Approvals = () => {
                               <XCircle className="h-4 w-4 mr-2" />
                               Afwijzen
                             </Button>
-                            <Button variant="ghost" size="sm">
-                              <Eye className="h-4 w-4 mr-2" />
-                              Details
-                            </Button>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </CardContent>
@@ -270,34 +241,40 @@ const Approvals = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {processedSubmissions.slice(0, 5).map((submission) => (
-                        <div key={submission.id} className="flex items-center justify-between p-3 border rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${
-                              submission.status === 'APPROVED' ? 'bg-green-100' : 'bg-red-100'
-                            }`}>
-                              {submission.status === 'APPROVED' ? 
-                                <CheckCircle className="h-4 w-4 text-green-600" /> :
-                                <XCircle className="h-4 w-4 text-red-600" />
-                              }
+                      {processedSubmissions.slice(0, 5).map((submission) => {
+                        const projectName = submission.project && typeof submission.project.name_i18n === 'object'
+                          ? submission.project.name_i18n.nl || submission.project.name_i18n.en || submission.project.name_i18n.tr
+                          : '';
+                        
+                        return (
+                          <div key={submission.id} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <div className={`p-2 rounded-lg ${
+                                submission.status === 'APPROVED' ? 'bg-green-100' : 'bg-red-100'
+                              }`}>
+                                {submission.status === 'APPROVED' ? 
+                                  <CheckCircle className="h-4 w-4 text-green-600" /> :
+                                  <XCircle className="h-4 w-4 text-red-600" />
+                                }
+                              </div>
+                              <div>
+                                <div className="font-medium">{projectName}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {formatDuration(Number(submission.hours))} • {format(new Date(submission.date), 'dd MMM', { locale: nl })}
+                                </div>
+                              </div>
                             </div>
-                            <div>
-                              <div className="font-medium">{submission.contractor_name}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {submission.project_name} • {formatDuration(submission.hours)}
+                            <div className="text-right">
+                              <Badge variant={submission.status === 'APPROVED' ? 'outline' : 'destructive'}>
+                                {submission.status === 'APPROVED' ? 'Goedgekeurd' : 'Afgewezen'}
+                              </Badge>
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {format(new Date(submission.approved_at || submission.rejected_at || ''), 'dd MMM', { locale: nl })}
                               </div>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <Badge variant={submission.status === 'APPROVED' ? 'outline' : 'destructive'}>
-                              {submission.status === 'APPROVED' ? 'Goedgekeurd' : 'Afgewezen'}
-                            </Badge>
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {format(new Date(submission.approved_at || submission.rejected_at || ''), 'dd MMM', { locale: nl })}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </CardContent>
                 </Card>
