@@ -7,6 +7,7 @@ import { AppSidebar } from '@/components/dashboard/AppSidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { 
   Dialog, 
@@ -14,7 +15,8 @@ import {
   DialogDescription, 
   DialogHeader, 
   DialogTitle, 
-  DialogTrigger 
+  DialogTrigger,
+  DialogFooter
 } from '@/components/ui/dialog';
 import { 
   Select,
@@ -35,7 +37,8 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
-  Euro
+  Euro,
+  CalendarIcon
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -43,18 +46,54 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 import { useInvoices } from '@/hooks/useInvoices';
 import { useClients } from '@/hooks/useClients';
+import { useToast } from '@/hooks/use-toast';
 
 type InvoiceStatus = 'DRAFT' | 'SENT' | 'VIEWED' | 'PAID' | 'OVERDUE' | 'CANCELLED';
 
 const Invoices = () => {
-  const { invoices, isLoading } = useInvoices();
+  const { invoices, isLoading, createInvoice } = useInvoices();
   const { clients } = useClients();
+  const { toast } = useToast();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showNewInvoiceDialog, setShowNewInvoiceDialog] = useState(false);
+  
+  // Form state
+  const [selectedClient, setSelectedClient] = useState('');
+  const [issueDate, setIssueDate] = useState<Date>(new Date());
+  const [dueDate, setDueDate] = useState<Date>(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)); // 14 days from now
+  const [vatRate, setVatRate] = useState('21');
+
+  const handleCreateInvoice = () => {
+    if (!selectedClient) {
+      toast({
+        title: 'Validatiefout',
+        description: 'Selecteer een klant',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    createInvoice({
+      client_id: selectedClient,
+      issue_date: issueDate.toISOString().split('T')[0],
+      due_date: dueDate.toISOString().split('T')[0],
+      vat_rate: parseFloat(vatRate),
+    });
+
+    // Reset form
+    setShowNewInvoiceDialog(false);
+    setSelectedClient('');
+    setIssueDate(new Date());
+    setDueDate(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000));
+    setVatRate('21');
+  };
 
   const getStatusColor = (status: InvoiceStatus) => {
     switch (status) {
@@ -150,13 +189,116 @@ const Invoices = () => {
                     <DialogHeader>
                       <DialogTitle>Nieuwe factuur maken</DialogTitle>
                       <DialogDescription>
-                        Maak een nieuwe factuur van goedgekeurde tijdsregistraties
+                        Maak een nieuwe factuur concept aan
                       </DialogDescription>
                     </DialogHeader>
-                    {/* Invoice creation form will go here */}
-                    <div className="text-center py-8 text-muted-foreground">
-                      Factuurformulier komt hier...
+                    
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="client">Klant</Label>
+                        <Select value={selectedClient} onValueChange={setSelectedClient}>
+                          <SelectTrigger id="client">
+                            <SelectValue placeholder="Selecteer een klant" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {clients.map((client) => {
+                              const clientName = typeof client.name_i18n === 'object'
+                                ? client.name_i18n.nl || client.name_i18n.en || client.name_i18n.tr
+                                : String(client.name_i18n || '');
+                              
+                              return (
+                                <SelectItem key={client.id} value={client.id}>
+                                  {clientName}
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Factuurdatum</Label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full justify-start text-left font-normal",
+                                  !issueDate && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {issueDate ? format(issueDate, "PPP", { locale: nl }) : <span>Selecteer datum</span>}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={issueDate}
+                                onSelect={(date) => date && setIssueDate(date)}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Vervaldatum</Label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full justify-start text-left font-normal",
+                                  !dueDate && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {dueDate ? format(dueDate, "PPP", { locale: nl }) : <span>Selecteer datum</span>}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={dueDate}
+                                onSelect={(date) => date && setDueDate(date)}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="vat">BTW percentage</Label>
+                        <Select value={vatRate} onValueChange={setVatRate}>
+                          <SelectTrigger id="vat">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="0">0%</SelectItem>
+                            <SelectItem value="9">9%</SelectItem>
+                            <SelectItem value="21">21%</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="bg-muted/50 p-4 rounded-lg">
+                        <p className="text-sm text-muted-foreground">
+                          Na het aanmaken van de factuur kun je regelitems toevoegen vanuit goedgekeurde tijdsregistraties of handmatig.
+                        </p>
+                      </div>
                     </div>
+
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setShowNewInvoiceDialog(false)}>
+                        Annuleren
+                      </Button>
+                      <Button onClick={handleCreateInvoice}>
+                        Factuur aanmaken
+                      </Button>
+                    </DialogFooter>
                   </DialogContent>
                 </Dialog>
               </div>
