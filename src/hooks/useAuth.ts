@@ -132,11 +132,11 @@ export function useAuthProvider(): AuthContextType {
             .from('contractor_profiles')
             .select('*')
             .eq('user_id', userId)
-            .single();
+            .maybeSingle();
 
           if (contractorError) {
             console.error('Error fetching contractor profile:', contractorError);
-          } else {
+          } else if (contractorData) {
             setContractorProfile(contractorData);
           }
         }

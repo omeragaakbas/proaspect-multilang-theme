@@ -43,69 +43,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useInvoices } from '@/hooks/useInvoices';
+import { useClients } from '@/hooks/useClients';
 
 type InvoiceStatus = 'DRAFT' | 'SENT' | 'VIEWED' | 'PAID' | 'OVERDUE' | 'CANCELLED';
 
-interface Invoice {
-  id: string;
-  invoice_number: string;
-  client_name: string;
-  status: InvoiceStatus;
-  issue_date: string;
-  due_date: string;
-  total_cents: number;
-  sent_at?: string;
-  paid_at?: string;
-}
-
 const Invoices = () => {
+  const { invoices, isLoading } = useInvoices();
+  const { clients } = useClients();
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showNewInvoiceDialog, setShowNewInvoiceDialog] = useState(false);
-
-  // Mock data - will be replaced with real data from Supabase
-  const invoices: Invoice[] = [
-    {
-      id: '1',
-      invoice_number: 'INV-2024-001',
-      client_name: 'ACME Corporation',
-      status: 'PAID',
-      issue_date: '2024-01-15',
-      due_date: '2024-01-29',
-      total_cents: 125000, // €1,250
-      sent_at: '2024-01-15T10:00:00Z',
-      paid_at: '2024-01-25T14:30:00Z'
-    },
-    {
-      id: '2',
-      invoice_number: 'INV-2024-002',
-      client_name: 'TechStart BV',
-      status: 'SENT',
-      issue_date: '2024-01-20',
-      due_date: '2024-02-03',
-      total_cents: 89000, // €890
-      sent_at: '2024-01-20T09:15:00Z'
-    },
-    {
-      id: '3',
-      invoice_number: 'INV-2024-003',
-      client_name: 'Digital Solutions',
-      status: 'OVERDUE',
-      issue_date: '2024-01-10',
-      due_date: '2024-01-24',
-      total_cents: 156500, // €1,565
-      sent_at: '2024-01-10T11:45:00Z'
-    },
-    {
-      id: '4',
-      invoice_number: 'INV-2024-004',
-      client_name: 'StartupXYZ',
-      status: 'DRAFT',
-      issue_date: '2024-01-25',
-      due_date: '2024-02-08',
-      total_cents: 75000 // €750
-    }
-  ];
 
   const getStatusColor = (status: InvoiceStatus) => {
     switch (status) {
@@ -151,8 +100,13 @@ const Invoices = () => {
   };
 
   const filteredInvoices = invoices.filter(invoice => {
+    // Get client name from client object
+    const clientName = invoice.client && typeof invoice.client.name_i18n === 'object'
+      ? invoice.client.name_i18n.nl || invoice.client.name_i18n.en || invoice.client.name_i18n.tr
+      : '';
+    
     const matchesSearch = invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         invoice.client_name.toLowerCase().includes(searchTerm.toLowerCase());
+                         clientName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -163,9 +117,9 @@ const Invoices = () => {
     sent: invoices.filter(i => i.status === 'SENT').length,
     paid: invoices.filter(i => i.status === 'PAID').length,
     overdue: invoices.filter(i => i.status === 'OVERDUE').length,
-    totalAmount: invoices.reduce((sum, i) => sum + i.total_cents, 0),
-    paidAmount: invoices.filter(i => i.status === 'PAID').reduce((sum, i) => sum + i.total_cents, 0),
-    outstandingAmount: invoices.filter(i => ['SENT', 'VIEWED', 'OVERDUE'].includes(i.status)).reduce((sum, i) => sum + i.total_cents, 0)
+    totalAmount: invoices.reduce((sum, i) => sum + (i.total_cents || 0), 0),
+    paidAmount: invoices.filter(i => i.status === 'PAID').reduce((sum, i) => sum + (i.total_cents || 0), 0),
+    outstandingAmount: invoices.filter(i => ['SENT', 'VIEWED', 'OVERDUE'].includes(i.status)).reduce((sum, i) => sum + (i.total_cents || 0), 0)
   };
 
   return (
@@ -298,17 +252,22 @@ const Invoices = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {filteredInvoices.map((invoice) => (
-                      <div key={invoice.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                        <div className="flex items-center gap-4">
-                          <div className="p-2 bg-muted rounded-lg">
-                            <FileText className="h-5 w-5" />
+                    {filteredInvoices.map((invoice) => {
+                      const clientName = invoice.client && typeof invoice.client.name_i18n === 'object'
+                        ? invoice.client.name_i18n.nl || invoice.client.name_i18n.en || invoice.client.name_i18n.tr
+                        : '';
+                      
+                      return (
+                        <div key={invoice.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                          <div className="flex items-center gap-4">
+                            <div className="p-2 bg-muted rounded-lg">
+                              <FileText className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <div className="font-medium">{invoice.invoice_number}</div>
+                              <div className="text-sm text-muted-foreground">{clientName}</div>
+                            </div>
                           </div>
-                          <div>
-                            <div className="font-medium">{invoice.invoice_number}</div>
-                            <div className="text-sm text-muted-foreground">{invoice.client_name}</div>
-                          </div>
-                        </div>
                         
                         <div className="flex items-center gap-4">
                           <div className="text-right">
@@ -351,8 +310,9 @@ const Invoices = () => {
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
-                      </div>
-                    ))}
+                        </div>
+                      );
+                    })}
                   </div>
 
                   {filteredInvoices.length === 0 && (

@@ -39,45 +39,31 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTimeEntries } from '@/hooks/useTimeEntries';
+import { useProjects } from '@/hooks/useProjects';
+import { useToast } from '@/hooks/use-toast';
 
 const TimeEntry = () => {
+  const { toast } = useToast();
+  const { timeEntries, isLoading, createTimeEntry } = useTimeEntries();
+  const { projects } = useProjects();
+  
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [showNewEntryDialog, setShowNewEntryDialog] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [currentTimer, setCurrentTimer] = useState('00:00:00');
+  
+  // Form state
+  const [selectedProject, setSelectedProject] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [hours, setHours] = useState('');
+  const [description, setDescription] = useState('');
 
   const weekStart = startOfWeek(currentWeek, { locale: nl });
   const weekEnd = endOfWeek(currentWeek, { locale: nl });
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
-
-  // Mock data - will be replaced with real data from Supabase
-  const projects = [
-    { id: '1', name: 'Website redesign', client: 'ACME Corporation' },
-    { id: '2', name: 'API ontwikkeling', client: 'TechStart BV' },
-    { id: '3', name: 'Mobile app', client: 'StartupXYZ' }
-  ];
-
-  const timeEntries = [
-    {
-      id: '1',
-      date: new Date(2024, 0, 15),
-      project: 'Website redesign',
-      client: 'ACME Corporation',
-      hours: 4.5,
-      description: 'Homepage design and responsive layout',
-      status: 'SUBMITTED'
-    },
-    {
-      id: '2',
-      date: new Date(2024, 0, 16),
-      project: 'API ontwikkeling',
-      client: 'TechStart BV',
-      hours: 6.0,
-      description: 'REST API endpoints voor gebruikersbeheer',
-      status: 'DRAFT'
-    }
-  ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -101,16 +87,46 @@ const TimeEntry = () => {
 
   const getDayEntries = (date: Date) => {
     return timeEntries.filter(entry => 
-      format(entry.date, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+      format(new Date(entry.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
     );
   };
 
   const getDayTotal = (date: Date) => {
-    return getDayEntries(date).reduce((total, entry) => total + entry.hours, 0);
+    return getDayEntries(date).reduce((total, entry) => total + Number(entry.hours), 0);
   };
 
   const toggleTimer = () => {
     setIsTimerRunning(!isTimerRunning);
+  };
+
+  const handleSaveTimeEntry = async (status: 'DRAFT' | 'SUBMITTED') => {
+    if (!selectedDate || !selectedProject || !hours) {
+      toast({
+        title: 'Validatiefout',
+        description: 'Vul datum, project en uren in',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    createTimeEntry({
+      date: selectedDate,
+      project_id: selectedProject,
+      start_time: startTime || undefined,
+      end_time: endTime || undefined,
+      hours: parseFloat(hours),
+      description: description || undefined,
+      status,
+    });
+
+    // Reset form
+    setShowNewEntryDialog(false);
+    setSelectedDate(undefined);
+    setSelectedProject('');
+    setStartTime('');
+    setEndTime('');
+    setHours('');
+    setDescription('');
   };
 
   return (
@@ -194,19 +210,28 @@ const TimeEntry = () => {
 
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Project</label>
-                        <Select>
+                        <Select value={selectedProject} onValueChange={setSelectedProject}>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecteer project" />
                           </SelectTrigger>
                           <SelectContent>
-                            {projects.map((project) => (
-                              <SelectItem key={project.id} value={project.id}>
-                                <div>
-                                  <div className="font-medium">{project.name}</div>
-                                  <div className="text-sm text-muted-foreground">{project.client}</div>
-                                </div>
-                              </SelectItem>
-                            ))}
+                            {projects.map((project) => {
+                              const projectName = typeof project.name_i18n === 'object' 
+                                ? project.name_i18n.nl || project.name_i18n.en || project.name_i18n.tr
+                                : String(project.name_i18n || '');
+                              const clientName = project.client && typeof project.client.name_i18n === 'object'
+                                ? project.client.name_i18n.nl || project.client.name_i18n.en || project.client.name_i18n.tr
+                                : '';
+                              
+                              return (
+                                <SelectItem key={project.id} value={project.id}>
+                                  <div>
+                                    <div className="font-medium">{projectName}</div>
+                                    {clientName && <div className="text-sm text-muted-foreground">{clientName}</div>}
+                                  </div>
+                                </SelectItem>
+                              );
+                            })}
                           </SelectContent>
                         </Select>
                       </div>
@@ -214,30 +239,40 @@ const TimeEntry = () => {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <label className="text-sm font-medium">Start tijd</label>
-                          <Input type="time" />
+                          <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
                         </div>
                         <div className="space-y-2">
                           <label className="text-sm font-medium">Eind tijd</label>
-                          <Input type="time" />
+                          <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
                         </div>
                       </div>
 
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Uren</label>
-                        <Input type="number" step="0.25" min="0" placeholder="0.0" />
+                        <Input type="number" step="0.25" min="0" placeholder="0.0" value={hours} onChange={(e) => setHours(e.target.value)} />
                       </div>
 
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Beschrijving</label>
-                        <Textarea placeholder="Wat heb je gedaan?" />
+                        <Textarea placeholder="Wat heb je gedaan?" value={description} onChange={(e) => setDescription(e.target.value)} />
                       </div>
 
                       <div className="flex gap-2">
-                        <Button variant="outline" className="flex-1">
+                        <Button 
+                          variant="outline" 
+                          className="flex-1"
+                          onClick={() => handleSaveTimeEntry('DRAFT')}
+                          type="button"
+                        >
                           <Save className="h-4 w-4 mr-2" />
                           Opslaan als concept
                         </Button>
-                        <Button variant="hero" className="flex-1">
+                        <Button 
+                          variant="hero" 
+                          className="flex-1"
+                          onClick={() => handleSaveTimeEntry('SUBMITTED')}
+                          type="button"
+                        >
                           <Send className="h-4 w-4 mr-2" />
                           Opslaan & indienen
                         </Button>
@@ -308,18 +343,27 @@ const TimeEntry = () => {
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-2">
-                        {dayEntries.map((entry) => (
-                          <div key={entry.id} className="text-xs bg-muted/50 p-2 rounded">
-                            <div className="font-medium truncate">{entry.project}</div>
-                            <div className="text-muted-foreground truncate">{entry.client}</div>
-                            <div className="flex items-center justify-between mt-1">
-                              <span>{entry.hours}h</span>
-                              <Badge variant={getStatusColor(entry.status)} className="text-xs">
-                                {getStatusText(entry.status)}
-                              </Badge>
+                        {dayEntries.map((entry) => {
+                          const projectName = entry.project && typeof entry.project.name_i18n === 'object'
+                            ? entry.project.name_i18n.nl || entry.project.name_i18n.en || entry.project.name_i18n.tr
+                            : '';
+                          const clientName = entry.project?.client && typeof entry.project.client.name_i18n === 'object'
+                            ? entry.project.client.name_i18n.nl || entry.project.client.name_i18n.en || entry.project.client.name_i18n.tr
+                            : '';
+                          
+                          return (
+                            <div key={entry.id} className="text-xs bg-muted/50 p-2 rounded">
+                              <div className="font-medium truncate">{projectName}</div>
+                              <div className="text-muted-foreground truncate">{clientName}</div>
+                              <div className="flex items-center justify-between mt-1">
+                                <span>{entry.hours}h</span>
+                                <Badge variant={getStatusColor(entry.status)} className="text-xs">
+                                  {getStatusText(entry.status)}
+                                </Badge>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                         
                         <Button 
                           variant="ghost" 
