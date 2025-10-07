@@ -51,13 +51,16 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { useInvoices } from '@/hooks/useInvoices';
 import { useClients } from '@/hooks/useClients';
+import { useTimeEntries } from '@/hooks/useTimeEntries';
 import { useToast } from '@/hooks/use-toast';
+import { Checkbox } from '@/components/ui/checkbox';
 
 type InvoiceStatus = 'DRAFT' | 'SENT' | 'VIEWED' | 'PAID' | 'OVERDUE' | 'CANCELLED';
 
 const Invoices = () => {
-  const { invoices, isLoading, createInvoice } = useInvoices();
+  const { invoices, isLoading, createInvoiceWithLineItems } = useInvoices();
   const { clients } = useClients();
+  const { timeEntries } = useTimeEntries();
   const { toast } = useToast();
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -67,8 +70,18 @@ const Invoices = () => {
   // Form state
   const [selectedClient, setSelectedClient] = useState('');
   const [issueDate, setIssueDate] = useState<Date>(new Date());
-  const [dueDate, setDueDate] = useState<Date>(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)); // 14 days from now
+  const [dueDate, setDueDate] = useState<Date>(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000));
   const [vatRate, setVatRate] = useState('21');
+  const [grouping, setGrouping] = useState<'day' | 'week'>('day');
+  const [selectedTimeEntries, setSelectedTimeEntries] = useState<string[]>([]);
+
+  // Get approved time entries for selected client
+  const approvedTimeEntries = timeEntries.filter(
+    entry => entry.status === 'APPROVED' && 
+    entry.project?.client && 
+    selectedClient && 
+    entry.project_id // We'll need to check client via project
+  );
 
   const handleCreateInvoice = () => {
     if (!selectedClient) {
@@ -80,11 +93,22 @@ const Invoices = () => {
       return;
     }
 
-    createInvoice({
+    if (selectedTimeEntries.length === 0) {
+      toast({
+        title: 'Validatiefout',
+        description: 'Selecteer minimaal één tijdsregistratie',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    createInvoiceWithLineItems({
       client_id: selectedClient,
       issue_date: issueDate.toISOString().split('T')[0],
       due_date: dueDate.toISOString().split('T')[0],
       vat_rate: parseFloat(vatRate),
+      time_entry_ids: selectedTimeEntries,
+      grouping: grouping,
     });
 
     // Reset form
@@ -93,6 +117,7 @@ const Invoices = () => {
     setIssueDate(new Date());
     setDueDate(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000));
     setVatRate('21');
+    setSelectedTimeEntries([]);
   };
 
   const getStatusColor = (status: InvoiceStatus) => {
@@ -270,25 +295,86 @@ const Invoices = () => {
                         </div>
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="vat">BTW percentage</Label>
-                        <Select value={vatRate} onValueChange={setVatRate}>
-                          <SelectTrigger id="vat">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="0">0%</SelectItem>
-                            <SelectItem value="9">9%</SelectItem>
-                            <SelectItem value="21">21%</SelectItem>
-                          </SelectContent>
-                        </Select>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="vat">BTW percentage</Label>
+                          <Select value={vatRate} onValueChange={setVatRate}>
+                            <SelectTrigger id="vat">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="0">0%</SelectItem>
+                              <SelectItem value="9">9%</SelectItem>
+                              <SelectItem value="21">21%</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="grouping">Groeperen op</Label>
+                          <Select value={grouping} onValueChange={(v: 'day' | 'week') => setGrouping(v)}>
+                            <SelectTrigger id="grouping">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="day">Per dag</SelectItem>
+                              <SelectItem value="week">Per week</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
 
-                      <div className="bg-muted/50 p-4 rounded-lg">
-                        <p className="text-sm text-muted-foreground">
-                          Na het aanmaken van de factuur kun je regelitems toevoegen vanuit goedgekeurde tijdsregistraties of handmatig.
-                        </p>
-                      </div>
+                      {selectedClient && (
+                        <div className="space-y-2">
+                          <Label>Goedgekeurde tijdsregistraties</Label>
+                          <div className="border rounded-lg max-h-[300px] overflow-y-auto">
+                            {approvedTimeEntries.length === 0 ? (
+                              <div className="p-4 text-center text-muted-foreground text-sm">
+                                Geen goedgekeurde tijdsregistraties voor deze klant
+                              </div>
+                            ) : (
+                              <div className="divide-y">
+                                {approvedTimeEntries.map((entry) => {
+                                  const projectName = entry.project && typeof entry.project.name_i18n === 'object'
+                                    ? entry.project.name_i18n.nl || entry.project.name_i18n.en || entry.project.name_i18n.tr
+                                    : '';
+                                  
+                                  return (
+                                    <div key={entry.id} className="p-3 flex items-start gap-3 hover:bg-muted/50">
+                                      <Checkbox
+                                        checked={selectedTimeEntries.includes(entry.id)}
+                                        onCheckedChange={(checked) => {
+                                          if (checked) {
+                                            setSelectedTimeEntries([...selectedTimeEntries, entry.id]);
+                                          } else {
+                                            setSelectedTimeEntries(selectedTimeEntries.filter(id => id !== entry.id));
+                                          }
+                                        }}
+                                      />
+                                      <div className="flex-1 min-w-0">
+                                        <div className="text-sm font-medium">{projectName}</div>
+                                        <div className="text-xs text-muted-foreground">
+                                          {format(new Date(entry.date), 'dd MMM yyyy', { locale: nl })} • {entry.hours}u
+                                        </div>
+                                        {entry.description && (
+                                          <div className="text-xs text-muted-foreground mt-1 truncate">
+                                            {entry.description}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                          {selectedTimeEntries.length > 0 && (
+                            <p className="text-sm text-muted-foreground">
+                              {selectedTimeEntries.length} tijdsregistratie(s) geselecteerd
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <DialogFooter>
