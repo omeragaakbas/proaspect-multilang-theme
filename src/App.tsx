@@ -30,7 +30,15 @@ import { ContactPage } from "./pages/ContactPage";
 import { FeaturesPage } from "./pages/FeaturesPage";
 import { PricingPage } from "./pages/PricingPage";
 import { FAQPage } from "./pages/FAQPage";
-// Importeer hier je andere pagina's, bijvoorbeeld de Homepage
+import { TimeTrackingPage } from "./pages/features/TimeTrackingPage";
+import { InvoicingPage } from "./pages/features/InvoicingPage";
+import { ReportingPage } from "./pages/features/ReportingPage";
+import { MobileAppPage } from "./pages/features/MobileAppPage";
+import { HelpCenterPage } from "./pages/support/HelpCenterPage";
+import { ApiDocsPage } from "./pages/support/ApiDocsPage";
+import { StatusPage } from "./pages/StatusPage";
+import { PrivacyPage } from "./pages/PrivacyPage";
+import { TermsPage } from "./pages/TermsPage";
 
 const queryClient = new QueryClient();
 
@@ -47,10 +55,19 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/features" element={<FeaturesPage />} />
+            <Route path="/features/time-tracking" element={<TimeTrackingPage />} />
+            <Route path="/features/invoicing" element={<InvoicingPage />} />
+            <Route path="/features/reporting" element={<ReportingPage />} />
+            <Route path="/features/mobile-app" element={<MobileAppPage />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/faq" element={<FAQPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/support/help-center" element={<HelpCenterPage />} />
+            <Route path="/support/api-docs" element={<ApiDocsPage />} />
+            <Route path="/status" element={<StatusPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/dashboard/clients" element={<Clients />} />
             <Route path="/dashboard/projects" element={<Projects />} />
