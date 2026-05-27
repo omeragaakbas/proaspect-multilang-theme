@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -68,22 +69,21 @@ const App = () => (
             <Route path="/status" element={<StatusPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/dashboard/clients" element={<Clients />} />
-            <Route path="/dashboard/projects" element={<Projects />} />
-            <Route path="/dashboard/time" element={<TimeEntry />} />
-            <Route path="/dashboard/invoices" element={<Invoices />} />
-            <Route path="/dashboard/expenses" element={<Expenses />} />
-            <Route path="/dashboard/approvals" element={<Approvals />} />
-            <Route path="/dashboard/reports" element={<Reports />} />
-            <Route path="/dashboard/team" element={<Team />} />
-            <Route path="/dashboard/client-portal" element={<ClientPortal />} />
-          <Route path="/dashboard/audit-logs" element={<AuditLogs />} />
-          <Route path="/dashboard/security" element={<Security />} />
-          <Route path="/dashboard/recurring-invoices" element={<RecurringInvoices />} />
-            <Route path="/dashboard/settings" element={<Settings />} />
             <Route path="/client-portal" element={<ClientPortalView />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/dashboard/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
+            <Route path="/dashboard/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+            <Route path="/dashboard/time" element={<ProtectedRoute><TimeEntry /></ProtectedRoute>} />
+            <Route path="/dashboard/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
+            <Route path="/dashboard/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
+            <Route path="/dashboard/approvals" element={<ProtectedRoute><Approvals /></ProtectedRoute>} />
+            <Route path="/dashboard/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+            <Route path="/dashboard/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
+            <Route path="/dashboard/client-portal" element={<ProtectedRoute><ClientPortal /></ProtectedRoute>} />
+            <Route path="/dashboard/audit-logs" element={<ProtectedRoute><AuditLogs /></ProtectedRoute>} />
+            <Route path="/dashboard/security" element={<ProtectedRoute><Security /></ProtectedRoute>} />
+            <Route path="/dashboard/recurring-invoices" element={<ProtectedRoute><RecurringInvoices /></ProtectedRoute>} />
+            <Route path="/dashboard/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>
