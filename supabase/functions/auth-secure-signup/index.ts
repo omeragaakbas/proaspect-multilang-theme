@@ -103,7 +103,7 @@ serve(async (req) => {
     const { data, error } = await supabase.auth.admin.createUser({
       email: validated.email,
       password: validated.password,
-      email_confirm: false, // Auto-confirm for better UX, or set to true to require confirmation
+      email_confirm: true,
       user_metadata: validated.userData || {},
     });
 

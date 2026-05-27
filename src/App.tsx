@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,86 +7,102 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
-import Clients from "./pages/dashboard/Clients";
-import Projects from "./pages/dashboard/Projects";
-import TimeEntry from "./pages/dashboard/TimeEntry";
-import Invoices from "./pages/dashboard/Invoices";
-import Approvals from "./pages/dashboard/Approvals";
-import Reports from "./pages/dashboard/Reports";
-import Settings from "./pages/dashboard/Settings";
-import Expenses from "./pages/dashboard/Expenses";
-import Team from "./pages/dashboard/Team";
-import ClientPortal from "./pages/dashboard/ClientPortal";
-import ClientPortalView from "./pages/ClientPortalView";
-import AuditLogs from "./pages/dashboard/AuditLogs";
-import Security from "./pages/dashboard/Security";
-import RecurringInvoices from "./pages/dashboard/RecurringInvoices";
-import NotFound from "./pages/NotFound";
-import { AboutPage } from "./pages/AboutPage";
-import { ContactPage } from "./pages/ContactPage";
-import { FeaturesPage } from "./pages/FeaturesPage";
-import { PricingPage } from "./pages/PricingPage";
-import { FAQPage } from "./pages/FAQPage";
-import { TimeTrackingPage } from "./pages/features/TimeTrackingPage";
-import { InvoicingPage } from "./pages/features/InvoicingPage";
-import { ReportingPage } from "./pages/features/ReportingPage";
-import { MobileAppPage } from "./pages/features/MobileAppPage";
-import { HelpCenterPage } from "./pages/support/HelpCenterPage";
-import { ApiDocsPage } from "./pages/support/ApiDocsPage";
-import { StatusPage } from "./pages/StatusPage";
-import { PrivacyPage } from "./pages/PrivacyPage";
-import { TermsPage } from "./pages/TermsPage";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+
+const Index = lazy(() => import("./pages/Index"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Clients = lazy(() => import("./pages/dashboard/Clients"));
+const Projects = lazy(() => import("./pages/dashboard/Projects"));
+const TimeEntry = lazy(() => import("./pages/dashboard/TimeEntry"));
+const Invoices = lazy(() => import("./pages/dashboard/Invoices"));
+const Approvals = lazy(() => import("./pages/dashboard/Approvals"));
+const Reports = lazy(() => import("./pages/dashboard/Reports"));
+const Settings = lazy(() => import("./pages/dashboard/Settings"));
+const Expenses = lazy(() => import("./pages/dashboard/Expenses"));
+const Team = lazy(() => import("./pages/dashboard/Team"));
+const ClientPortal = lazy(() => import("./pages/dashboard/ClientPortal"));
+const ClientPortalView = lazy(() => import("./pages/ClientPortalView"));
+const AuditLogs = lazy(() => import("./pages/dashboard/AuditLogs"));
+const Security = lazy(() => import("./pages/dashboard/Security"));
+const RecurringInvoices = lazy(() => import("./pages/dashboard/RecurringInvoices"));
+
+const AboutPage = lazy(() => import("./pages/AboutPage").then(m => ({ default: m.AboutPage })));
+const ContactPage = lazy(() => import("./pages/ContactPage").then(m => ({ default: m.ContactPage })));
+const FeaturesPage = lazy(() => import("./pages/FeaturesPage").then(m => ({ default: m.FeaturesPage })));
+const PricingPage = lazy(() => import("./pages/PricingPage").then(m => ({ default: m.PricingPage })));
+const FAQPage = lazy(() => import("./pages/FAQPage").then(m => ({ default: m.FAQPage })));
+const TimeTrackingPage = lazy(() => import("./pages/features/TimeTrackingPage").then(m => ({ default: m.TimeTrackingPage })));
+const InvoicingPage = lazy(() => import("./pages/features/InvoicingPage").then(m => ({ default: m.InvoicingPage })));
+const ReportingPage = lazy(() => import("./pages/features/ReportingPage").then(m => ({ default: m.ReportingPage })));
+const MobileAppPage = lazy(() => import("./pages/features/MobileAppPage").then(m => ({ default: m.MobileAppPage })));
+const HelpCenterPage = lazy(() => import("./pages/support/HelpCenterPage").then(m => ({ default: m.HelpCenterPage })));
+const ApiDocsPage = lazy(() => import("./pages/support/ApiDocsPage").then(m => ({ default: m.ApiDocsPage })));
+const StatusPage = lazy(() => import("./pages/StatusPage").then(m => ({ default: m.StatusPage })));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage").then(m => ({ default: m.PrivacyPage })));
+const TermsPage = lazy(() => import("./pages/TermsPage").then(m => ({ default: m.TermsPage })));
 
 const queryClient = new QueryClient();
+
+function PageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+    </div>
+  );
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <OfflineIndicator />
-        <Router>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/features" element={<FeaturesPage />} />
-            <Route path="/features/time-tracking" element={<TimeTrackingPage />} />
-            <Route path="/features/invoicing" element={<InvoicingPage />} />
-            <Route path="/features/reporting" element={<ReportingPage />} />
-            <Route path="/features/mobile-app" element={<MobileAppPage />} />
-            <Route path="/pricing" element={<PricingPage />} />
-            <Route path="/faq" element={<FAQPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/support/help-center" element={<HelpCenterPage />} />
-            <Route path="/support/api-docs" element={<ApiDocsPage />} />
-            <Route path="/status" element={<StatusPage />} />
-            <Route path="/privacy" element={<PrivacyPage />} />
-            <Route path="/terms" element={<TermsPage />} />
-            <Route path="/client-portal" element={<ClientPortalView />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/dashboard/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
-            <Route path="/dashboard/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
-            <Route path="/dashboard/time" element={<ProtectedRoute><TimeEntry /></ProtectedRoute>} />
-            <Route path="/dashboard/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
-            <Route path="/dashboard/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
-            <Route path="/dashboard/approvals" element={<ProtectedRoute><Approvals /></ProtectedRoute>} />
-            <Route path="/dashboard/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-            <Route path="/dashboard/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
-            <Route path="/dashboard/client-portal" element={<ProtectedRoute><ClientPortal /></ProtectedRoute>} />
-            <Route path="/dashboard/audit-logs" element={<ProtectedRoute><AuditLogs /></ProtectedRoute>} />
-            <Route path="/dashboard/security" element={<ProtectedRoute><Security /></ProtectedRoute>} />
-            <Route path="/dashboard/recurring-invoices" element={<ProtectedRoute><RecurringInvoices /></ProtectedRoute>} />
-            <Route path="/dashboard/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Router>
+        <ErrorBoundary>
+          <Toaster />
+          <Sonner />
+          <OfflineIndicator />
+          <Router>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/features" element={<FeaturesPage />} />
+                <Route path="/features/time-tracking" element={<TimeTrackingPage />} />
+                <Route path="/features/invoicing" element={<InvoicingPage />} />
+                <Route path="/features/reporting" element={<ReportingPage />} />
+                <Route path="/features/mobile-app" element={<MobileAppPage />} />
+                <Route path="/pricing" element={<PricingPage />} />
+                <Route path="/faq" element={<FAQPage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/contact" element={<ContactPage />} />
+                <Route path="/support/help-center" element={<HelpCenterPage />} />
+                <Route path="/support/api-docs" element={<ApiDocsPage />} />
+                <Route path="/status" element={<StatusPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/terms" element={<TermsPage />} />
+                <Route path="/client-portal" element={<ClientPortalView />} />
+                <Route path="/dashboard" element={<ProtectedRoute><ErrorBoundary><Dashboard /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/dashboard/clients" element={<ProtectedRoute><ErrorBoundary><Clients /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/dashboard/projects" element={<ProtectedRoute><ErrorBoundary><Projects /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/dashboard/time" element={<ProtectedRoute><ErrorBoundary><TimeEntry /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/dashboard/invoices" element={<ProtectedRoute><ErrorBoundary><Invoices /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/dashboard/expenses" element={<ProtectedRoute><ErrorBoundary><Expenses /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/dashboard/approvals" element={<ProtectedRoute><ErrorBoundary><Approvals /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/dashboard/reports" element={<ProtectedRoute><ErrorBoundary><Reports /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/dashboard/team" element={<ProtectedRoute><ErrorBoundary><Team /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/dashboard/client-portal" element={<ProtectedRoute><ErrorBoundary><ClientPortal /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/dashboard/audit-logs" element={<ProtectedRoute><ErrorBoundary><AuditLogs /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/dashboard/security" element={<ProtectedRoute><ErrorBoundary><Security /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/dashboard/recurring-invoices" element={<ProtectedRoute><ErrorBoundary><RecurringInvoices /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/dashboard/settings" element={<ProtectedRoute><ErrorBoundary><Settings /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </Router>
+        </ErrorBoundary>
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>

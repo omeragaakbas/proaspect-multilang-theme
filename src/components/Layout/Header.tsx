@@ -1,12 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ProAspectLogo } from '@/components/ProAspectLogo';
 import { Button } from '@/components/ui/button';
 import { Clock, Users, FileText, Settings, LogOut, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 export const Header: React.FC = () => {
   const { user, signOut, loading } = useAuth();
+  const { t } = useTranslation();
 
   const handleSignOut = async () => {
     await signOut();
@@ -24,73 +27,42 @@ export const Header: React.FC = () => {
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
           {!user ? (
             <>
-              <Link
-                to="/features"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Features
+              <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">
+                {t('header.features')}
               </Link>
-              <Link
-                to="/pricing"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Prijzen
+              <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+                {t('header.pricing')}
               </Link>
-              <Link
-                to="/faq"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                FAQ
+              <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors">
+                {t('header.faq')}
               </Link>
-              <Link
-                to="/about"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Over ons
+              <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">
+                {t('header.about')}
               </Link>
-              <Link
-                to="/contact"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Contact
+              <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
+                {t('header.contact')}
               </Link>
             </>
           ) : (
             <>
-              <Link 
-                to="/dashboard/time" 
-                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-              >
+              <Link to="/dashboard/time" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
                 <Clock className="h-4 w-4" />
-                Tijdregistratie
+                {t('nav.timeTracking')}
               </Link>
-              <Link 
-                to="/dashboard/clients" 
-                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-              >
+              <Link to="/dashboard/clients" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
                 <Users className="h-4 w-4" />
-                Klanten
+                {t('nav.clients')}
               </Link>
-              <Link 
-                to="/dashboard/invoices" 
-                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-              >
+              <Link to="/dashboard/invoices" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
                 <FileText className="h-4 w-4" />
-                Facturen
+                {t('nav.invoices')}
               </Link>
             </>
           )}
         </nav>
 
         <div className="flex items-center gap-3">
-          {!user && !loading && (
-            <a 
-              href="tel:+31701234567" 
-              className="hidden lg:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <span className="font-medium">070 123 4567</span>
-            </a>
-          )}
+          <LanguageSwitcher />
           {!loading && (
             <>
               {user ? (
@@ -102,24 +74,24 @@ export const Header: React.FC = () => {
                   </Link>
                   <Link to="/dashboard">
                     <Button variant="outline" size="sm">
-                      Dashboard
+                      {t('nav.dashboard')}
                     </Button>
                   </Link>
                   <Button variant="ghost" size="sm" onClick={handleSignOut}>
                     <LogOut className="mr-1 h-3 w-3" />
-                    Uitloggen
+                    {t('auth.logout')}
                   </Button>
                 </>
               ) : (
                 <>
                   <Link to="/login">
                     <Button variant="outline" size="sm">
-                      Inloggen
+                      {t('auth.login')}
                     </Button>
                   </Link>
                   <Link to="/register">
                     <Button variant="hero" size="sm">
-                      Gratis proberen
+                      {t('header.tryFree')}
                       <ArrowRight className="ml-1 h-3 w-3" />
                     </Button>
                   </Link>

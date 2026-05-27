@@ -1,6 +1,8 @@
 import { Clock, Users, FileText, FolderOpen, Settings, BarChart3, Home, CheckCircle, Receipt, Key, Shield, Lock, RefreshCw } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 import {
   Sidebar,
@@ -14,101 +16,38 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 
-const menuItems = [
-  { 
-    title: 'Dashboard', 
-    url: '/dashboard', 
-    icon: Home,
-    exact: true
-  },
-  { 
-    title: 'Tijdregistratie', 
-    url: '/dashboard/time', 
-    icon: Clock 
-  },
-  { 
-    title: 'Klanten', 
-    url: '/dashboard/clients', 
-    icon: Users 
-  },
-  { 
-    title: 'Projecten', 
-    url: '/dashboard/projects', 
-    icon: FolderOpen 
-  },
-  { 
-    title: 'Facturen', 
-    url: '/dashboard/invoices', 
-    icon: FileText 
-  },
-  { 
-    title: 'Terugkerende Facturen', 
-    url: '/dashboard/recurring-invoices', 
-    icon: RefreshCw 
-  },
-  { 
-    title: 'Onkosten', 
-    url: '/dashboard/expenses', 
-    icon: Receipt 
-  },
-  { 
-    title: 'Rapporten', 
-    url: '/dashboard/reports', 
-    icon: BarChart3 
-  },
-  { 
-    title: 'Goedkeuringen', 
-    url: '/dashboard/approvals', 
-    icon: CheckCircle 
-  },
-];
-
-const collaborationItems = [
-  { 
-    title: 'Team', 
-    url: '/dashboard/team', 
-    icon: Users 
-  },
-  { 
-    title: 'Client Portal', 
-    url: '/dashboard/client-portal', 
-    icon: Key 
-  },
-];
-
-const settingsItems = [
-  { 
-    title: 'Audit Logs', 
-    url: '/dashboard/audit-logs', 
-    icon: Shield 
-  },
-  { 
-    title: 'Beveiliging', 
-    url: '/dashboard/security', 
-    icon: Lock 
-  },
-  { 
-    title: 'Instellingen', 
-    url: '/dashboard/settings', 
-    icon: Settings 
-  },
-];
-
 export function AppSidebar() {
   const location = useLocation();
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const currentPath = location.pathname;
 
-  const isActive = (path: string, exact?: boolean) => {
-    if (exact) {
-      return currentPath === path;
-    }
-    return currentPath.startsWith(path);
-  };
+  const menuItems = [
+    { title: t('nav.dashboard'), url: '/dashboard', icon: Home, exact: true },
+    { title: t('nav.timeTracking'), url: '/dashboard/time', icon: Clock },
+    { title: t('nav.clients'), url: '/dashboard/clients', icon: Users },
+    { title: t('nav.projects'), url: '/dashboard/projects', icon: FolderOpen },
+    { title: t('nav.invoices'), url: '/dashboard/invoices', icon: FileText },
+    { title: t('nav.recurringInvoices'), url: '/dashboard/recurring-invoices', icon: RefreshCw },
+    { title: t('nav.expenses'), url: '/dashboard/expenses', icon: Receipt },
+    { title: t('nav.reports'), url: '/dashboard/reports', icon: BarChart3 },
+    { title: t('nav.approvals'), url: '/dashboard/approvals', icon: CheckCircle },
+  ];
 
-  const getNavClasses = (isItemActive: boolean) =>
-    isItemActive 
-      ? 'bg-primary text-primary-foreground font-medium' 
+  const collaborationItems = [
+    { title: t('nav.team'), url: '/dashboard/team', icon: Users },
+    { title: t('nav.clientPortal'), url: '/dashboard/client-portal', icon: Key },
+  ];
+
+  const settingsItems = [
+    { title: t('nav.auditLogs'), url: '/dashboard/audit-logs', icon: Shield },
+    { title: t('nav.security'), url: '/dashboard/security', icon: Lock },
+    { title: t('nav.settings'), url: '/dashboard/settings', icon: Settings },
+  ];
+
+  const getNavClasses = (isActive: boolean) =>
+    isActive
+      ? 'bg-primary text-primary-foreground font-medium'
       : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground';
 
   return (
@@ -116,16 +55,15 @@ export function AppSidebar() {
       <SidebarTrigger className="m-2 self-end" />
 
       <SidebarContent>
-        {/* Main Navigation */}
         <SidebarGroup>
           <SidebarGroupLabel>ProAspect</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild>
-                    <NavLink 
-                      to={item.url} 
+                    <NavLink
+                      to={item.url}
                       end={item.exact}
                       className={({ isActive }) => getNavClasses(isActive)}
                     >
@@ -139,15 +77,14 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Collaboration */}
         <SidebarGroup>
-          <SidebarGroupLabel>Samenwerking</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('nav.team')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {collaborationItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild>
-                    <NavLink 
+                    <NavLink
                       to={item.url}
                       className={({ isActive }) => getNavClasses(isActive)}
                     >
@@ -161,14 +98,13 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Settings */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
               {settingsItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild>
-                    <NavLink 
+                    <NavLink
                       to={item.url}
                       className={({ isActive }) => getNavClasses(isActive)}
                     >
@@ -182,15 +118,19 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* User Info */}
-        {profile && (
-          <div className="mt-auto p-4 border-t">
-            <div className="text-sm">
-              <p className="font-medium">{profile.name}</p>
-              <p className="text-muted-foreground text-xs">{profile.email}</p>
-            </div>
+        <div className="mt-auto border-t">
+          <div className="p-3">
+            <LanguageSwitcher />
           </div>
-        )}
+          {profile && (
+            <div className="p-4 pt-0">
+              <div className="text-sm">
+                <p className="font-medium">{profile.name}</p>
+                <p className="text-muted-foreground text-xs">{profile.email}</p>
+              </div>
+            </div>
+          )}
+        </div>
       </SidebarContent>
     </Sidebar>
   );
