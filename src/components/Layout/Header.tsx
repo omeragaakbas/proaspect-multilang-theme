@@ -3,13 +3,14 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ProAspectLogo } from '@/components/ProAspectLogo';
 import { Button } from '@/components/ui/button';
-import { Clock, Users, FileText, Settings, LogOut, ArrowRight } from 'lucide-react';
+import { Clock, Users, FileText, Settings, LogOut, ArrowRight, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 export const Header: React.FC = () => {
-  const { user, signOut, loading } = useAuth();
+  const { user, userRole, signOut, loading } = useAuth();
   const { t } = useTranslation();
+  const isAdmin = userRole?.role === 'ADMIN';
 
   const handleSignOut = async () => {
     await signOut();
@@ -45,18 +46,37 @@ export const Header: React.FC = () => {
             </>
           ) : (
             <>
-              <Link to="/dashboard/time" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-                <Clock className="h-4 w-4" />
-                {t('nav.timeTracking')}
-              </Link>
-              <Link to="/dashboard/clients" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-                <Users className="h-4 w-4" />
-                {t('nav.clients')}
-              </Link>
-              <Link to="/dashboard/invoices" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-                <FileText className="h-4 w-4" />
-                {t('nav.invoices')}
-              </Link>
+              {isAdmin ? (
+                <>
+                  <Link to="/dashboard/invoices" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+                    <FileText className="h-4 w-4" />
+                    {t('nav.invoices')}
+                  </Link>
+                  <Link to="/dashboard/approvals" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+                    <CheckCircle className="h-4 w-4" />
+                    {t('nav.approvals')}
+                  </Link>
+                  <Link to="/dashboard/contractors" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+                    <Users className="h-4 w-4" />
+                    {t('nav.contractors')}
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link to="/dashboard/time" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+                    <Clock className="h-4 w-4" />
+                    {t('nav.timeTracking')}
+                  </Link>
+                  <Link to="/dashboard/clients" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+                    <Users className="h-4 w-4" />
+                    {t('nav.clients')}
+                  </Link>
+                  <Link to="/dashboard/invoices" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+                    <FileText className="h-4 w-4" />
+                    {t('nav.invoices')}
+                  </Link>
+                </>
+              )}
             </>
           )}
         </nav>

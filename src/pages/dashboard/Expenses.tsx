@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { nl } from 'date-fns/locale';
+import { nl, enUS, tr } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/dashboard/AppSidebar';
@@ -31,8 +32,10 @@ const EXPENSE_CATEGORIES = [
 ];
 
 const Expenses = () => {
+  const { t, i18n } = useTranslation();
   const { expenses, createExpense, isLoading } = useExpenses();
   const { projects } = useProjects();
+  const dateLocale = i18n.language === 'tr' ? tr : i18n.language === 'en' ? enUS : nl;
   const [showNewExpenseDialog, setShowNewExpenseDialog] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [amount, setAmount] = useState('');
@@ -83,29 +86,29 @@ const Expenses = () => {
               <div className="flex h-16 items-center gap-4 px-6">
                 <SidebarTrigger className="lg:hidden" />
                 <div className="flex-1">
-                  <h1 className="text-2xl font-semibold">Onkosten</h1>
+                  <h1 className="text-2xl font-semibold">{t('expenses.title')}</h1>
                   <p className="text-muted-foreground">
-                    Registreer en beheer je zakelijke uitgaven
+                    {t('expenses.subtitle')}
                   </p>
                 </div>
                 <Dialog open={showNewExpenseDialog} onOpenChange={setShowNewExpenseDialog}>
                   <DialogTrigger asChild>
                     <Button variant="hero" className="gap-2">
                       <Plus className="h-4 w-4" />
-                      Nieuwe onkosten
+                      {t('expenses.newExpense')}
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
-                      <DialogTitle>Onkosten toevoegen</DialogTitle>
+                      <DialogTitle>{t('expenses.addExpense')}</DialogTitle>
                       <DialogDescription>
-                        Registreer een nieuwe zakelijke uitgave
+                        {t('expenses.addExpenseDesc')}
                       </DialogDescription>
                     </DialogHeader>
                     
                     <form onSubmit={handleSubmit} className="space-y-4">
                       <div className="space-y-2">
-                        <Label>Datum</Label>
+                        <Label>{t('expenses.date')}</Label>
                         <Popover>
                           <PopoverTrigger asChild>
                             <Button
@@ -116,7 +119,7 @@ const Expenses = () => {
                               )}
                             >
                               <CalendarIcon className="mr-2 h-4 w-4" />
-                              {selectedDate ? format(selectedDate, "PPP", { locale: nl }) : <span>Selecteer datum</span>}
+                              {selectedDate ? format(selectedDate, "PPP", { locale: dateLocale }) : <span>{t('common.selectDate')}</span>}
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0">
@@ -131,7 +134,7 @@ const Expenses = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="amount">Bedrag (€) *</Label>
+                        <Label htmlFor="amount">{t('expenses.amountRequired')}</Label>
                         <Input
                           id="amount"
                           type="number"
@@ -144,10 +147,10 @@ const Expenses = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="category">Categorie *</Label>
+                        <Label htmlFor="category">{t('expenses.categoryRequired')}</Label>
                         <Select value={category} onValueChange={setCategory} required>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecteer categorie" />
+                            <SelectValue placeholder={t('expenses.selectCategory')} />
                           </SelectTrigger>
                           <SelectContent>
                             {EXPENSE_CATEGORIES.map((cat) => (
@@ -160,10 +163,10 @@ const Expenses = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="project">Project (optioneel)</Label>
+                        <Label htmlFor="project">{t('expenses.projectOptional')}</Label>
                         <Select value={projectId} onValueChange={setProjectId}>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecteer project" />
+                            <SelectValue placeholder={t('expenses.selectProject')} />
                           </SelectTrigger>
                           <SelectContent>
                             {projects.map((project) => (
@@ -176,12 +179,12 @@ const Expenses = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="description">Beschrijving</Label>
+                        <Label htmlFor="description">{t('expenses.description')}</Label>
                         <Textarea
                           id="description"
                           value={description}
                           onChange={(e) => setDescription(e.target.value)}
-                          placeholder="Beschrijf de uitgave..."
+                          placeholder={t('expenses.describeExpense')}
                           rows={3}
                         />
                       </div>
@@ -193,16 +196,16 @@ const Expenses = () => {
                           onCheckedChange={(checked) => setVatDeductible(checked as boolean)}
                         />
                         <Label htmlFor="vat" className="cursor-pointer">
-                          BTW aftrekbaar (21%)
+                          {t('expenses.vatDeductible21')}
                         </Label>
                       </div>
 
                       <div className="flex gap-2 pt-2">
                         <Button type="button" variant="outline" onClick={() => setShowNewExpenseDialog(false)} className="flex-1">
-                          Annuleren
+                          {t('common.cancel')}
                         </Button>
                         <Button type="submit" variant="hero" className="flex-1">
-                          Opslaan
+                          {t('common.save')}
                         </Button>
                       </div>
                     </form>
@@ -219,31 +222,31 @@ const Expenses = () => {
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                       <TrendingDown className="h-4 w-4" />
-                      Totale onkosten
+                      {t('expenses.totalExpenses')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">{formatCurrency(totalExpenses)}</div>
-                    <p className="text-xs text-muted-foreground">{expenses.length} uitgaven</p>
+                    <p className="text-xs text-muted-foreground">{t('expenses.expenseCount', { count: expenses.length })}</p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                       <Euro className="h-4 w-4" />
-                      BTW terug te vorderen
+                      {t('expenses.vatToReclaim')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-green-600">{formatCurrency(totalVat)}</div>
-                    <p className="text-xs text-muted-foreground">Aftrekbaar BTW</p>
+                    <p className="text-xs text-muted-foreground">{t('expenses.deductibleVat')}</p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                       <FileText className="h-4 w-4" />
-                      Deze maand
+                      {t('dashboard.thisMonth')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -255,7 +258,7 @@ const Expenses = () => {
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {expenses.filter(e => new Date(e.date).getMonth() === new Date().getMonth()).length} uitgaven
+                      {t('expenses.expenseCount', { count: expenses.filter(e => new Date(e.date).getMonth() === new Date().getMonth()).length })}
                     </p>
                   </CardContent>
                 </Card>
@@ -264,24 +267,24 @@ const Expenses = () => {
               {/* Expenses List */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Onkostenoverzicht</CardTitle>
+                  <CardTitle>{t('expenses.overview')}</CardTitle>
                   <CardDescription>
-                    Alle geregistreerde uitgaven
+                    {t('expenses.allRegistered')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {isLoading ? (
-                    <div className="text-center py-12 text-muted-foreground">Onkosten laden...</div>
+                    <div className="text-center py-12 text-muted-foreground">{t('common.loading')}</div>
                   ) : expenses.length === 0 ? (
                     <div className="text-center py-12">
                       <Receipt className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-medium mb-2">Geen onkosten gevonden</h3>
+                      <h3 className="text-lg font-medium mb-2">{t('expenses.noExpensesFound')}</h3>
                       <p className="text-muted-foreground mb-4">
-                        Begin met het registreren van je eerste uitgave
+                        {t('expenses.startRegistering')}
                       </p>
                       <Button variant="hero" onClick={() => setShowNewExpenseDialog(true)}>
                         <Plus className="h-4 w-4 mr-2" />
-                        Eerste onkosten toevoegen
+                        {t('expenses.addFirst')}
                       </Button>
                     </div>
                   ) : (
@@ -295,7 +298,7 @@ const Expenses = () => {
                             <div>
                               <div className="font-medium">{expense.category}</div>
                               <div className="text-sm text-muted-foreground">
-                                {format(new Date(expense.date), 'd MMM yyyy', { locale: nl })}
+                                {format(new Date(expense.date), 'd MMM yyyy', { locale: dateLocale })}
                                 {expense.project && ` • ${expense.project.name_i18n.nl}`}
                               </div>
                               {expense.description && (

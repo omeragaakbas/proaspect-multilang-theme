@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { AppSidebar } from '@/components/dashboard/AppSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -15,8 +16,15 @@ import { useProjects } from '@/hooks/useProjects';
 import { useClients } from '@/hooks/useClients';
 
 const Projects = () => {
+  const { t, i18n } = useTranslation();
   const { projects, isLoading, createProject } = useProjects();
   const { clients } = useClients();
+
+  const getLocalizedName = (nameI18n: any) => {
+    if (!nameI18n || typeof nameI18n !== 'object') return '';
+    const lang = i18n.language as 'nl' | 'en' | 'tr';
+    return nameI18n[lang] || nameI18n.nl || nameI18n.en || nameI18n.tr || '';
+  };
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [projectName, setProjectName] = useState('');
   const [projectCode, setProjectCode] = useState('');
@@ -58,9 +66,9 @@ const Projects = () => {
               {/* Header */}
               <div className="flex justify-between items-center mb-8">
                 <div>
-                  <h1 className="text-3xl font-bold mb-2">Projecten</h1>
+                  <h1 className="text-3xl font-bold mb-2">{t('projects.title')}</h1>
                   <p className="text-muted-foreground">
-                    Beheer al je projecten en uurtarieven
+                    {t('projects.subtitle')}
                   </p>
                 </div>
                 
@@ -68,21 +76,21 @@ const Projects = () => {
                   <DialogTrigger asChild>
                     <Button className="gap-2">
                       <Plus className="h-4 w-4" />
-                      Nieuw Project
+                      {t('projects.newProject')}
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[525px]">
                     <form onSubmit={handleSubmit}>
                       <DialogHeader>
-                        <DialogTitle>Nieuw Project</DialogTitle>
+                        <DialogTitle>{t('projects.newProject')}</DialogTitle>
                         <DialogDescription>
-                          Voeg een nieuw project toe aan je systeem
+                          {t('projects.addProjectDesc')}
                         </DialogDescription>
                       </DialogHeader>
                       
                       <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                          <Label htmlFor="name">Projectnaam *</Label>
+                          <Label htmlFor="name">{t('projects.projectNameRequired')}</Label>
                           <Input
                             id="name"
                             value={projectName}
@@ -93,15 +101,15 @@ const Projects = () => {
                         </div>
 
                         <div className="grid gap-2">
-                          <Label htmlFor="client">Klant *</Label>
+                          <Label htmlFor="client">{t('projects.clientRequired')}</Label>
                           <Select value={selectedClientId} onValueChange={setSelectedClientId} required>
                             <SelectTrigger>
-                              <SelectValue placeholder="Selecteer klant" />
+                              <SelectValue placeholder={t('projects.selectClient')} />
                             </SelectTrigger>
                             <SelectContent>
                               {clients.map((client) => (
                                 <SelectItem key={client.id} value={client.id}>
-                                  {client.name_i18n.nl}
+                                  {getLocalizedName(client.name_i18n)}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -109,7 +117,7 @@ const Projects = () => {
                         </div>
 
                         <div className="grid gap-2">
-                          <Label htmlFor="code">Projectcode</Label>
+                          <Label htmlFor="code">{t('projects.projectCode')}</Label>
                           <Input
                             id="code"
                             value={projectCode}
@@ -119,18 +127,18 @@ const Projects = () => {
                         </div>
 
                         <div className="grid gap-2">
-                          <Label htmlFor="description">Omschrijving</Label>
+                          <Label htmlFor="description">{t('projects.description')}</Label>
                           <Textarea
                             id="description"
                             value={projectDescription}
                             onChange={(e) => setProjectDescription(e.target.value)}
-                            placeholder="Beschrijf het project..."
+                            placeholder={t('projects.describeProject')}
                             rows={3}
                           />
                         </div>
 
                         <div className="grid gap-2">
-                          <Label htmlFor="rate">Uurtarief (€)</Label>
+                          <Label htmlFor="rate">{t('projects.hourlyRateEur')}</Label>
                           <Input
                             id="rate"
                             type="number"
@@ -144,9 +152,9 @@ const Projects = () => {
                       
                       <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                          Annuleren
+                          {t('common.cancel')}
                         </Button>
-                        <Button type="submit">Project aanmaken</Button>
+                        <Button type="submit">{t('projects.createProject')}</Button>
                       </DialogFooter>
                     </form>
                   </DialogContent>
@@ -157,7 +165,7 @@ const Projects = () => {
               <div className="grid md:grid-cols-3 gap-6 mb-8">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-sm font-medium">Actieve Projecten</CardTitle>
+                    <CardTitle className="text-sm font-medium">{t('projects.activeProjects')}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">{projects.filter(p => !p.archived).length}</div>
@@ -166,7 +174,7 @@ const Projects = () => {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-sm font-medium">Gemiddeld Tarief</CardTitle>
+                    <CardTitle className="text-sm font-medium">{t('projects.averageRate')}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
@@ -180,7 +188,7 @@ const Projects = () => {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-sm font-medium">Totaal Projecten</CardTitle>
+                    <CardTitle className="text-sm font-medium">{t('projects.totalProjects')}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">{projects.length}</div>
@@ -190,7 +198,7 @@ const Projects = () => {
 
               {/* Projects List */}
               {isLoading ? (
-                <div className="text-center py-12 text-muted-foreground">Projecten laden...</div>
+                <div className="text-center py-12 text-muted-foreground">{t('common.loading')}</div>
               ) : (
                 <div className="grid gap-4">
                   {projects.map((project) => (
@@ -203,18 +211,18 @@ const Projects = () => {
                             </div>
                             <div>
                               <CardTitle className="flex items-center gap-2">
-                                {project.name_i18n.nl}
+                                {getLocalizedName(project.name_i18n)}
                                 {project.archived && (
                                   <Badge variant="secondary">
                                     <Archive className="h-3 w-3 mr-1" />
-                                    Gearchiveerd
+                                    {t('projects.archived')}
                                   </Badge>
                                 )}
                               </CardTitle>
                               <CardDescription className="mt-1">
                                 {project.code && <span className="font-mono">{project.code}</span>}
                                 {project.code && ' • '}
-                                {project.client?.name_i18n.nl}
+                                {getLocalizedName(project.client?.name_i18n)}
                               </CardDescription>
                             </div>
                           </div>
@@ -222,7 +230,7 @@ const Projects = () => {
                           <div className="flex items-center gap-2">
                             {project.hourly_rate && (
                               <div className="text-right mr-4">
-                                <div className="text-sm text-muted-foreground">Uurtarief</div>
+                                <div className="text-sm text-muted-foreground">{t('projects.hourlyRate')}</div>
                                 <div className="text-lg font-bold">€{(project.hourly_rate / 100).toFixed(2)}</div>
                               </div>
                             )}
@@ -232,9 +240,9 @@ const Projects = () => {
                           </div>
                         </div>
                       </CardHeader>
-                      {project.description_i18n?.nl && (
+                      {project.description_i18n && getLocalizedName(project.description_i18n) && (
                         <CardContent>
-                          <p className="text-sm text-muted-foreground">{project.description_i18n.nl}</p>
+                          <p className="text-sm text-muted-foreground">{getLocalizedName(project.description_i18n)}</p>
                         </CardContent>
                       )}
                     </Card>
@@ -246,13 +254,13 @@ const Projects = () => {
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center py-12">
                     <FolderOpen className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Geen projecten gevonden</h3>
+                    <h3 className="text-lg font-semibold mb-2">{t('projects.noProjectsFound')}</h3>
                     <p className="text-muted-foreground mb-4">
-                      Begin met het toevoegen van je eerste project
+                      {t('projects.startAdding')}
                     </p>
                     <Button onClick={() => setIsDialogOpen(true)}>
                       <Plus className="h-4 w-4 mr-2" />
-                      Nieuw Project
+                      {t('projects.newProject')}
                     </Button>
                   </CardContent>
                 </Card>

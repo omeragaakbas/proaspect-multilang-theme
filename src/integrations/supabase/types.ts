@@ -393,6 +393,8 @@ export type Database = {
       }
       invoices: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           client_approved_at: string | null
           client_approved_by: string | null
           client_id: string
@@ -412,11 +414,14 @@ export type Database = {
           payment_terms: string | null
           pdf_url: string | null
           recurring_invoice_id: string | null
+          rejected_at: string | null
+          rejection_reason: string | null
           reminder_sent_at: string | null
           sent_at: string | null
           status: string
           stripe_checkout_session_id: string | null
           stripe_payment_intent_id: string | null
+          submitted_at: string | null
           subtotal_cents: number
           total_cents: number
           ubl_url: string | null
@@ -426,6 +431,8 @@ export type Database = {
           viewed_at: string | null
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           client_approved_at?: string | null
           client_approved_by?: string | null
           client_id: string
@@ -445,11 +452,14 @@ export type Database = {
           payment_terms?: string | null
           pdf_url?: string | null
           recurring_invoice_id?: string | null
+          rejected_at?: string | null
+          rejection_reason?: string | null
           reminder_sent_at?: string | null
           sent_at?: string | null
           status?: string
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
+          submitted_at?: string | null
           subtotal_cents?: number
           total_cents?: number
           ubl_url?: string | null
@@ -459,6 +469,8 @@ export type Database = {
           viewed_at?: string | null
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           client_approved_at?: string | null
           client_approved_by?: string | null
           client_id?: string
@@ -478,11 +490,14 @@ export type Database = {
           payment_terms?: string | null
           pdf_url?: string | null
           recurring_invoice_id?: string | null
+          rejected_at?: string | null
+          rejection_reason?: string | null
           reminder_sent_at?: string | null
           sent_at?: string | null
           status?: string
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
+          submitted_at?: string | null
           subtotal_cents?: number
           total_cents?: number
           ubl_url?: string | null

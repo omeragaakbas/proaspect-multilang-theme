@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { AppSidebar } from '@/components/dashboard/AppSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -15,6 +16,7 @@ import { User, Building, Settings as SettingsIcon, LogOut, Bell, Mail } from 'lu
 import { supabase } from '@/integrations/supabase/client';
 
 const Settings = () => {
+  const { t } = useTranslation();
   const { profile, contractorProfile, signOut, updateProfile } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -56,13 +58,13 @@ const Settings = () => {
       });
 
       toast({
-        title: "Profiel bijgewerkt",
-        description: "Je profielgegevens zijn succesvol opgeslagen.",
+        title: t('settings.profileUpdated'),
+        description: t('settings.profileUpdatedDesc'),
       });
     } catch (error) {
       toast({
-        title: "Fout",
-        description: "Er ging iets mis bij het opslaan.",
+        title: t('common.error'),
+        description: t('errors.unexpectedError'),
         variant: "destructive",
       });
     } finally {
@@ -91,13 +93,13 @@ const Settings = () => {
       if (error) throw error;
 
       toast({
-        title: "Bedrijfsgegevens bijgewerkt",
-        description: "Je bedrijfsgegevens zijn succesvol opgeslagen.",
+        title: t('settings.businessUpdated'),
+        description: t('settings.businessUpdatedDesc'),
       });
     } catch (error) {
       toast({
-        title: "Fout",
-        description: "Er ging iets mis bij het opslaan.",
+        title: t('common.error'),
+        description: t('errors.unexpectedError'),
         variant: "destructive",
       });
     } finally {
@@ -122,13 +124,13 @@ const Settings = () => {
       if (error) throw error;
 
       toast({
-        title: "Notificatie-instellingen bijgewerkt",
-        description: "Je voorkeuren zijn succesvol opgeslagen.",
+        title: t('settings.notificationsUpdated'),
+        description: t('settings.notificationsUpdatedDesc'),
       });
     } catch (error) {
       toast({
-        title: "Fout",
-        description: "Er ging iets mis bij het opslaan.",
+        title: t('common.error'),
+        description: t('errors.unexpectedError'),
         variant: "destructive",
       });
     } finally {
@@ -150,9 +152,9 @@ const Settings = () => {
             <div className="max-w-4xl mx-auto">
               {/* Header */}
               <div className="mb-8">
-                <h1 className="text-3xl font-bold mb-2">Instellingen</h1>
+                <h1 className="text-3xl font-bold mb-2">{t('settings.title')}</h1>
                 <p className="text-muted-foreground">
-                  Beheer je profiel en bedrijfsgegevens
+                  {t('settings.subtitle')}
                 </p>
               </div>
 
@@ -162,26 +164,26 @@ const Settings = () => {
                   <CardHeader>
                     <div className="flex items-center gap-2">
                       <User className="h-5 w-5" />
-                      <CardTitle>Persoonlijke Gegevens</CardTitle>
+                      <CardTitle>{t('settings.personalDetails')}</CardTitle>
                     </div>
                     <CardDescription>
-                      Werk je persoonlijke informatie bij
+                      {t('settings.personalDetailsDesc')}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <form onSubmit={handleProfileUpdate} className="space-y-4">
                       <div className="grid gap-2">
-                        <Label htmlFor="name">Naam</Label>
+                        <Label htmlFor="name">{t('auth.name')}</Label>
                         <Input
                           id="name"
                           value={name}
                           onChange={(e) => setName(e.target.value)}
-                          placeholder="Je naam"
+                          placeholder={t('auth.name')}
                         />
                       </div>
 
                       <div className="grid gap-2">
-                        <Label htmlFor="email">E-mail</Label>
+                        <Label htmlFor="email">{t('auth.email')}</Label>
                         <Input
                           id="email"
                           type="email"
@@ -190,12 +192,12 @@ const Settings = () => {
                           className="bg-muted"
                         />
                         <p className="text-xs text-muted-foreground">
-                          E-mailadres kan niet worden gewijzigd
+                          {t('settings.emailCannotChange')}
                         </p>
                       </div>
 
                       <div className="grid gap-2">
-                        <Label htmlFor="locale">Taal</Label>
+                        <Label htmlFor="locale">{t('auth.language')}</Label>
                         <Select value={preferredLocale} onValueChange={(value) => setPreferredLocale(value as 'nl' | 'en' | 'tr')}>
                           <SelectTrigger>
                             <SelectValue />
@@ -209,7 +211,7 @@ const Settings = () => {
                       </div>
 
                       <Button type="submit" disabled={isLoading}>
-                        {isLoading ? "Opslaan..." : "Opslaan"}
+                        {isLoading ? t('settings.saving') : t('common.save')}
                       </Button>
                     </form>
                   </CardContent>
@@ -220,16 +222,16 @@ const Settings = () => {
                   <CardHeader>
                     <div className="flex items-center gap-2">
                       <Building className="h-5 w-5" />
-                      <CardTitle>Bedrijfsgegevens</CardTitle>
+                      <CardTitle>{t('settings.businessDetails')}</CardTitle>
                     </div>
                     <CardDescription>
-                      Werk je bedrijfsinformatie bij
+                      {t('settings.businessDetailsDesc')}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <form onSubmit={handleContractorUpdate} className="space-y-4">
                       <div className="grid gap-2">
-                        <Label htmlFor="companyName">Bedrijfsnaam</Label>
+                        <Label htmlFor="companyName">{t('auth.companyName')}</Label>
                         <Input
                           id="companyName"
                           value={companyName}
@@ -240,7 +242,7 @@ const Settings = () => {
 
                       <div className="grid md:grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                          <Label htmlFor="kvk">KVK Nummer</Label>
+                          <Label htmlFor="kvk">{t('auth.kvk')}</Label>
                           <Input
                             id="kvk"
                             value={kvk}
@@ -250,7 +252,7 @@ const Settings = () => {
                         </div>
 
                         <div className="grid gap-2">
-                          <Label htmlFor="vat">BTW Nummer</Label>
+                          <Label htmlFor="vat">{t('auth.vatNumber')}</Label>
                           <Input
                             id="vat"
                             value={vatNumber}
@@ -271,7 +273,7 @@ const Settings = () => {
                       </div>
 
                       <Button type="submit" disabled={isLoading}>
-                        {isLoading ? "Opslaan..." : "Opslaan"}
+                        {isLoading ? t('settings.saving') : t('common.save')}
                       </Button>
                     </form>
                   </CardContent>
@@ -282,19 +284,19 @@ const Settings = () => {
                   <CardHeader>
                     <div className="flex items-center gap-2">
                       <Bell className="h-5 w-5" />
-                      <CardTitle>Email Notificaties</CardTitle>
+                      <CardTitle>{t('settings.emailNotifications')}</CardTitle>
                     </div>
                     <CardDescription>
-                      Beheer wanneer je email notificaties ontvangt
+                      {t('settings.emailNotificationsDesc')}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="font-medium">Factuur verzonden</h4>
+                          <h4 className="font-medium">{t('settings.invoiceSent')}</h4>
                           <p className="text-sm text-muted-foreground">
-                            Ontvang een bevestiging wanneer een factuur is verzonden
+                            {t('settings.invoiceSentDesc')}
                           </p>
                         </div>
                         <Switch
@@ -308,9 +310,9 @@ const Settings = () => {
                       
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="font-medium">Factuur bekeken</h4>
+                          <h4 className="font-medium">{t('settings.invoiceViewed')}</h4>
                           <p className="text-sm text-muted-foreground">
-                            Krijg een melding wanneer een klant de factuur heeft geopend
+                            {t('settings.invoiceViewedDesc')}
                           </p>
                         </div>
                         <Switch
@@ -324,9 +326,9 @@ const Settings = () => {
                       
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="font-medium">Betaling ontvangen</h4>
+                          <h4 className="font-medium">{t('settings.paymentReceived')}</h4>
                           <p className="text-sm text-muted-foreground">
-                            Ontvang een notificatie bij een succesvolle betaling
+                            {t('settings.paymentReceivedDesc')}
                           </p>
                         </div>
                         <Switch
@@ -340,9 +342,9 @@ const Settings = () => {
                       
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="font-medium">Betalingsherinneringen</h4>
+                          <h4 className="font-medium">{t('settings.paymentReminders')}</h4>
                           <p className="text-sm text-muted-foreground">
-                            Stuur automatisch herinneringen 3 dagen voor vervaldatum
+                            {t('settings.paymentRemindersDesc')}
                           </p>
                         </div>
                         <Switch
@@ -356,9 +358,9 @@ const Settings = () => {
                       
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="font-medium">Vervallen facturen</h4>
+                          <h4 className="font-medium">{t('settings.overdueInvoices')}</h4>
                           <p className="text-sm text-muted-foreground">
-                            Ontvang een waarschuwing bij vervallen facturen
+                            {t('settings.overdueInvoicesDesc')}
                           </p>
                         </div>
                         <Switch
@@ -372,9 +374,9 @@ const Settings = () => {
                       
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="font-medium">Tijdsregistratie goedgekeurd</h4>
+                          <h4 className="font-medium">{t('settings.timeApproved')}</h4>
                           <p className="text-sm text-muted-foreground">
-                            Krijg een melding wanneer uren zijn goedgekeurd
+                            {t('settings.timeApprovedDesc')}
                           </p>
                         </div>
                         <Switch
@@ -388,9 +390,9 @@ const Settings = () => {
                       
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="font-medium">Tijdsregistratie afgekeurd</h4>
+                          <h4 className="font-medium">{t('settings.timeRejected')}</h4>
                           <p className="text-sm text-muted-foreground">
-                            Ontvang een notificatie bij afkeuring met reden
+                            {t('settings.timeRejectedDesc')}
                           </p>
                         </div>
                         <Switch
@@ -404,9 +406,9 @@ const Settings = () => {
                       
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="font-medium">Team uitnodigingen</h4>
+                          <h4 className="font-medium">{t('settings.teamInvitations')}</h4>
                           <p className="text-sm text-muted-foreground">
-                            Ontvang meldingen over teamuitnodigingen
+                            {t('settings.teamInvitationsDesc')}
                           </p>
                         </div>
                         <Switch
@@ -419,7 +421,7 @@ const Settings = () => {
 
                       <Button onClick={handleNotificationUpdate} disabled={isLoading} className="w-full mt-4">
                         <Mail className="h-4 w-4 mr-2" />
-                        {isLoading ? "Opslaan..." : "Notificatie-instellingen opslaan"}
+                        {isLoading ? t('settings.saving') : t('settings.saveNotifications')}
                       </Button>
                     </div>
                   </CardContent>
@@ -430,24 +432,24 @@ const Settings = () => {
                   <CardHeader>
                     <div className="flex items-center gap-2">
                       <SettingsIcon className="h-5 w-5" />
-                      <CardTitle>Account</CardTitle>
+                      <CardTitle>{t('settings.account')}</CardTitle>
                     </div>
                     <CardDescription>
-                      Beheer je account instellingen
+                      {t('settings.accountDesc')}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="font-medium">Uitloggen</h4>
+                          <h4 className="font-medium">{t('settings.logoutTitle')}</h4>
                           <p className="text-sm text-muted-foreground">
-                            Log uit van je account
+                            {t('settings.logoutDesc')}
                           </p>
                         </div>
                         <Button variant="outline" onClick={handleSignOut}>
                           <LogOut className="h-4 w-4 mr-2" />
-                          Uitloggen
+                          {t('auth.logout')}
                         </Button>
                       </div>
                     </div>

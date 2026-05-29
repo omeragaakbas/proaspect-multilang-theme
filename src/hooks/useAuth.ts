@@ -126,19 +126,16 @@ export function useAuthProvider(): AuthContextType {
       } else {
         setUserRole(roleData);
 
-        // If user is a contractor, fetch contractor profile
-        if (roleData?.role === 'CONTRACTOR') {
-          const { data: contractorData, error: contractorError } = await supabase
-            .from('contractor_profiles')
-            .select('*')
-            .eq('user_id', userId)
-            .maybeSingle();
+        const { data: contractorData, error: contractorError } = await supabase
+          .from('contractor_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle();
 
-          if (contractorError) {
-            console.error('Error fetching contractor profile:', contractorError);
-          } else if (contractorData) {
-            setContractorProfile(contractorData);
-          }
+        if (contractorError) {
+          console.error('Error fetching contractor profile:', contractorError);
+        } else if (contractorData) {
+          setContractorProfile(contractorData);
         }
       }
     } catch (error) {

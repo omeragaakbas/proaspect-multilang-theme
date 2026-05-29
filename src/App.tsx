@@ -29,6 +29,7 @@ const ClientPortalView = lazy(() => import("./pages/ClientPortalView"));
 const AuditLogs = lazy(() => import("./pages/dashboard/AuditLogs"));
 const Security = lazy(() => import("./pages/dashboard/Security"));
 const RecurringInvoices = lazy(() => import("./pages/dashboard/RecurringInvoices"));
+const Contractors = lazy(() => import("./pages/dashboard/Contractors"));
 
 const AboutPage = lazy(() => import("./pages/AboutPage").then(m => ({ default: m.AboutPage })));
 const ContactPage = lazy(() => import("./pages/ContactPage").then(m => ({ default: m.ContactPage })));
@@ -97,6 +98,7 @@ const App = () => (
                 <Route path="/dashboard/audit-logs" element={<ProtectedRoute><ErrorBoundary><AuditLogs /></ErrorBoundary></ProtectedRoute>} />
                 <Route path="/dashboard/security" element={<ProtectedRoute><ErrorBoundary><Security /></ErrorBoundary></ProtectedRoute>} />
                 <Route path="/dashboard/recurring-invoices" element={<ProtectedRoute><ErrorBoundary><RecurringInvoices /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/dashboard/contractors" element={<ProtectedRoute><ErrorBoundary><Contractors /></ErrorBoundary></ProtectedRoute>} />
                 <Route path="/dashboard/settings" element={<ProtectedRoute><ErrorBoundary><Settings /></ErrorBoundary></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

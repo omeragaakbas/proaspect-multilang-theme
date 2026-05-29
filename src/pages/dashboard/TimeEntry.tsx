@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, eachDayOfInterval } from 'date-fns';
-import { nl } from 'date-fns/locale';
+import { nl, enUS, tr } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/dashboard/AppSidebar';
@@ -44,9 +45,12 @@ import { useProjects } from '@/hooks/useProjects';
 import { useToast } from '@/hooks/use-toast';
 
 const TimeEntry = () => {
+  const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const { timeEntries, isLoading, createTimeEntry } = useTimeEntries();
   const { projects } = useProjects();
+
+  const dateLocale = i18n.language === 'tr' ? tr : i18n.language === 'en' ? enUS : nl;
   
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [showNewEntryDialog, setShowNewEntryDialog] = useState(false);
@@ -61,8 +65,8 @@ const TimeEntry = () => {
   const [hours, setHours] = useState('');
   const [description, setDescription] = useState('');
 
-  const weekStart = startOfWeek(currentWeek, { locale: nl });
-  const weekEnd = endOfWeek(currentWeek, { locale: nl });
+  const weekStart = startOfWeek(currentWeek, { locale: dateLocale });
+  const weekEnd = endOfWeek(currentWeek, { locale: dateLocale });
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
   const getStatusColor = (status: string) => {
@@ -76,13 +80,8 @@ const TimeEntry = () => {
   };
 
   const getStatusText = (status: string) => {
-    switch (status) {
-      case 'DRAFT': return 'Concept';
-      case 'SUBMITTED': return 'Ingediend';
-      case 'APPROVED': return 'Goedgekeurd';
-      case 'REJECTED': return 'Afgewezen';
-      default: return 'Onbekend';
-    }
+    const key = status.toLowerCase();
+    return t(`time.${key}`, t('common.unknown'));
   };
 
   const getDayEntries = (date: Date) => {
@@ -102,8 +101,8 @@ const TimeEntry = () => {
   const handleSaveTimeEntry = async (status: 'DRAFT' | 'SUBMITTED') => {
     if (!selectedDate || !selectedProject || !hours) {
       toast({
-        title: 'Validatiefout',
-        description: 'Vul datum, project en uren in',
+        title: t('time.validationError'),
+        description: t('time.validationDesc'),
         variant: 'destructive',
       });
       return;
@@ -141,9 +140,9 @@ const TimeEntry = () => {
               <div className="flex h-16 items-center gap-4 px-6">
                 <SidebarTrigger className="lg:hidden" />
                 <div className="flex-1">
-                  <h1 className="text-2xl font-semibold">Tijdregistratie</h1>
+                  <h1 className="text-2xl font-semibold">{t('time.title')}</h1>
                   <p className="text-muted-foreground">
-                    Registreer je gewerkte uren per project
+                    {t('time.subtitle')}
                   </p>
                 </div>
                 
@@ -169,20 +168,20 @@ const TimeEntry = () => {
                   <DialogTrigger asChild>
                     <Button variant="hero" className="gap-2">
                       <Plus className="h-4 w-4" />
-                      Tijd toevoegen
+                      {t('time.addEntry')}
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
-                      <DialogTitle>Nieuwe tijdregistratie</DialogTitle>
+                      <DialogTitle>{t('time.newEntry')}</DialogTitle>
                       <DialogDescription>
-                        Voeg je gewerkte uren toe
+                        {t('time.addEntryDesc')}
                       </DialogDescription>
                     </DialogHeader>
                     
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Datum</label>
+                        <label className="text-sm font-medium">{t('time.date')}</label>
                         <Popover>
                           <PopoverTrigger asChild>
                             <Button
@@ -193,7 +192,7 @@ const TimeEntry = () => {
                               )}
                             >
                               <CalendarIcon />
-                              {selectedDate ? format(selectedDate, "PPP", { locale: nl }) : <span>Selecteer datum</span>}
+                              {selectedDate ? format(selectedDate, "PPP", { locale: dateLocale }) : <span>{t('common.selectDate')}</span>}
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0" align="start">
@@ -209,10 +208,10 @@ const TimeEntry = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Project</label>
+                        <label className="text-sm font-medium">{t('time.project')}</label>
                         <Select value={selectedProject} onValueChange={setSelectedProject}>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecteer project" />
+                            <SelectValue placeholder={t('time.selectProject')} />
                           </SelectTrigger>
                           <SelectContent>
                             {projects.map((project) => {
@@ -238,23 +237,23 @@ const TimeEntry = () => {
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Start tijd</label>
+                          <label className="text-sm font-medium">{t('time.startTime')}</label>
                           <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Eind tijd</label>
+                          <label className="text-sm font-medium">{t('time.endTime')}</label>
                           <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
                         </div>
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Uren</label>
+                        <label className="text-sm font-medium">{t('time.hours')}</label>
                         <Input type="number" step="0.25" min="0" placeholder="0.0" value={hours} onChange={(e) => setHours(e.target.value)} />
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Beschrijving</label>
-                        <Textarea placeholder="Wat heb je gedaan?" value={description} onChange={(e) => setDescription(e.target.value)} />
+                        <label className="text-sm font-medium">{t('time.description')}</label>
+                        <Textarea placeholder={t('time.whatDidYouDo')} value={description} onChange={(e) => setDescription(e.target.value)} />
                       </div>
 
                       <div className="flex gap-2">
@@ -265,16 +264,16 @@ const TimeEntry = () => {
                           type="button"
                         >
                           <Save className="h-4 w-4 mr-2" />
-                          Opslaan als concept
+                          {t('time.saveAsDraft')}
                         </Button>
-                        <Button 
-                          variant="hero" 
+                        <Button
+                          variant="hero"
                           className="flex-1"
                           onClick={() => handleSaveTimeEntry('SUBMITTED')}
                           type="button"
                         >
                           <Send className="h-4 w-4 mr-2" />
-                          Opslaan & indienen
+                          {t('time.saveAndSubmit')}
                         </Button>
                       </div>
                     </div>
@@ -296,7 +295,7 @@ const TimeEntry = () => {
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <h2 className="text-lg font-semibold">
-                    Week {format(weekStart, 'd MMM', { locale: nl })} - {format(weekEnd, 'd MMM yyyy', { locale: nl })}
+                    {t('time.week')} {format(weekStart, 'd MMM', { locale: dateLocale })} - {format(weekEnd, 'd MMM yyyy', { locale: dateLocale })}
                   </h2>
                   <Button 
                     variant="outline" 
@@ -309,12 +308,12 @@ const TimeEntry = () => {
                     variant="outline"
                     onClick={() => setCurrentWeek(new Date())}
                   >
-                    Deze week
+                    {t('time.thisWeek')}
                   </Button>
                 </div>
                 
                 <div className="text-sm text-muted-foreground">
-                  Totaal deze week: <strong>10.5 uur</strong>
+                  {t('time.totalThisWeek')}: <strong>10.5 {t('time.hours').toLowerCase()}</strong>
                 </div>
               </div>
 
@@ -330,10 +329,10 @@ const TimeEntry = () => {
                       <CardHeader className="pb-3">
                         <div className="text-center">
                           <CardTitle className="text-sm font-medium">
-                            {format(day, 'EEE', { locale: nl })}
+                            {format(day, 'EEE', { locale: dateLocale })}
                           </CardTitle>
                           <CardDescription className="text-lg font-semibold">
-                            {format(day, 'd', { locale: nl })}
+                            {format(day, 'd', { locale: dateLocale })}
                           </CardDescription>
                           {dayTotal > 0 && (
                             <div className="text-xs text-primary font-medium">
@@ -375,7 +374,7 @@ const TimeEntry = () => {
                           }}
                         >
                           <Plus className="h-3 w-3 mr-1" />
-                          Toevoegen
+                          {t('time.add')}
                         </Button>
                       </CardContent>
                     </Card>
