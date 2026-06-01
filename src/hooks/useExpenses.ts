@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 
 export interface Expense {
   id: string;
@@ -24,6 +25,7 @@ export interface Expense {
 }
 
 export function useExpenses() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -61,8 +63,8 @@ export function useExpenses() {
       if (!user) throw new Error('Not authenticated');
 
       const amount_cents = Math.round(newExpense.amount * 100);
-      const vat_amount_cents = newExpense.vat_deductible 
-        ? Math.round(amount_cents * 0.21) 
+      const vat_amount_cents = newExpense.vat_deductible
+        ? Math.round(amount_cents * 0.21)
         : null;
 
       const { data, error } = await supabase
@@ -85,17 +87,70 @@ export function useExpenses() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
-      toast({
-        title: 'Onkosten toegevoegd',
-        description: 'De onkosten zijn succesvol geregistreerd.',
-      });
+      toast({ title: t('expenses.created'), description: t('expenses.createdDesc') });
     },
     onError: (error) => {
-      toast({
-        title: 'Fout',
-        description: `Er is een fout opgetreden: ${error.message}`,
-        variant: 'destructive',
-      });
+      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const updateExpense = useMutation({
+    mutationFn: async (params: {
+      id: string;
+      project_id?: string;
+      date?: string;
+      amount?: number;
+      category?: string;
+      description?: string;
+      vat_deductible?: boolean;
+    }) => {
+      const updates: any = {};
+      if (params.project_id !== undefined) updates.project_id = params.project_id;
+      if (params.date !== undefined) updates.date = params.date;
+      if (params.category !== undefined) updates.category = params.category;
+      if (params.description !== undefined) updates.description = params.description;
+      if (params.vat_deductible !== undefined) updates.vat_deductible = params.vat_deductible;
+      if (params.amount !== undefined) {
+        updates.amount_cents = Math.round(params.amount * 100);
+        updates.vat_amount_cents = (params.vat_deductible ?? false)
+          ? Math.round(updates.amount_cents * 0.21)
+          : null;
+      }
+
+      const { data, error } = await supabase
+        .from('expenses')
+        .update(updates)
+        .eq('id', params.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      toast({ title: t('expenses.updated'), description: t('expenses.updatedDesc') });
+    },
+    onError: (error) => {
+      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const deleteExpense = useMutation({
+    mutationFn: async (expenseId: string) => {
+      const { error } = await supabase
+        .from('expenses')
+        .delete()
+        .eq('id', expenseId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      toast({ title: t('expenses.deleted'), description: t('expenses.deletedDesc') });
+    },
+    onError: (error) => {
+      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -103,5 +158,7 @@ export function useExpenses() {
     expenses,
     isLoading,
     createExpense: createExpense.mutate,
+    updateExpense: updateExpense.mutate,
+    deleteExpense: deleteExpense.mutate,
   };
 }

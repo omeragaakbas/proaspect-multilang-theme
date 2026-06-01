@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Header } from '@/components/Layout/Header';
@@ -8,6 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useAuth } from '@/hooks/useAuth';
 import { useInvoices } from '@/hooks/useInvoices';
@@ -31,7 +34,9 @@ import {
 function AdminDashboard() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const { invoices, approveInvoice, sendInvoice } = useInvoices();
+  const { invoices, approveInvoice, rejectInvoice, sendInvoice } = useInvoices();
+  const [rejectingInvoiceId, setRejectingInvoiceId] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
   const { analytics, loading } = useAnalytics();
 
   const submittedInvoices = invoices.filter(i => i.status === 'SUBMITTED');
@@ -163,7 +168,10 @@ function AdminDashboard() {
                           size="sm"
                           variant="outline"
                           className="text-red-600 border-red-200 hover:bg-red-50"
-                          onClick={() => navigate('/dashboard/invoices')}
+                          onClick={() => {
+                            setRejectingInvoiceId(invoice.id);
+                            setRejectionReason('');
+                          }}
                         >
                           <XCircle className="h-4 w-4 mr-1" />
                           {t('invoices.reject')}
@@ -272,6 +280,42 @@ function AdminDashboard() {
           </CardContent>
         </Card>
       </main>
+
+      <Dialog open={!!rejectingInvoiceId} onOpenChange={(open) => { if (!open) setRejectingInvoiceId(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('invoices.reject')}</DialogTitle>
+            <DialogDescription>{t('invoices.rejectDesc')}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t('invoices.rejectionReason')}</Label>
+              <Textarea
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                placeholder={t('invoices.rejectionReasonPlaceholder')}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectingInvoiceId(null)}>{t('common.cancel')}</Button>
+            <Button
+              variant="destructive"
+              disabled={!rejectionReason.trim()}
+              onClick={() => {
+                if (rejectingInvoiceId && rejectionReason.trim()) {
+                  rejectInvoice({ invoiceId: rejectingInvoiceId, reason: rejectionReason.trim() });
+                  setRejectingInvoiceId(null);
+                  setRejectionReason('');
+                }
+              }}
+            >
+              {t('invoices.reject')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

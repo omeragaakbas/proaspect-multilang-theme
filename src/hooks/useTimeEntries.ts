@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 
 export interface TimeEntry {
   id: string;
@@ -33,6 +34,7 @@ export interface TimeEntry {
 }
 
 export function useTimeEntries() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -97,24 +99,17 @@ export function useTimeEntries() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['time_entries'] });
-      toast({
-        title: 'Tijdregistratie opgeslagen',
-        description: 'Je tijdregistratie is succesvol opgeslagen.',
-      });
+      toast({ title: t('time.entrySaved'), description: t('time.entrySavedDesc') });
     },
     onError: (error) => {
-      toast({
-        title: 'Fout',
-        description: `Er is een fout opgetreden: ${error.message}`,
-        variant: 'destructive',
-      });
+      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
     },
   });
 
-  const updateTimeEntry = useMutation({
+  const updateTimeEntryStatus = useMutation({
     mutationFn: async ({ id, status, rejection_reason }: { id: string; status: 'SUBMITTED' | 'APPROVED' | 'REJECTED'; rejection_reason?: string }) => {
       const updates: any = { status };
-      
+
       if (status === 'SUBMITTED') {
         updates.submitted_at = new Date().toISOString();
       } else if (status === 'APPROVED') {
@@ -141,10 +136,67 @@ export function useTimeEntries() {
     },
   });
 
+  const editTimeEntry = useMutation({
+    mutationFn: async (params: {
+      id: string;
+      date?: string;
+      project_id?: string;
+      start_time?: string;
+      end_time?: string;
+      hours?: number;
+      description?: string;
+    }) => {
+      const updates: any = {};
+      if (params.date !== undefined) updates.date = params.date;
+      if (params.project_id !== undefined) updates.project_id = params.project_id;
+      if (params.start_time !== undefined) updates.start_time = params.start_time;
+      if (params.end_time !== undefined) updates.end_time = params.end_time;
+      if (params.hours !== undefined) updates.hours = params.hours;
+      if (params.description !== undefined) updates.description = params.description;
+
+      const { data, error } = await supabase
+        .from('time_entries')
+        .update(updates)
+        .eq('id', params.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['time_entries'] });
+      toast({ title: t('time.entryUpdated'), description: t('time.entryUpdatedDesc') });
+    },
+    onError: (error) => {
+      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const deleteTimeEntry = useMutation({
+    mutationFn: async (entryId: string) => {
+      const { error } = await supabase
+        .from('time_entries')
+        .delete()
+        .eq('id', entryId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['time_entries'] });
+      toast({ title: t('time.entryDeleted'), description: t('time.entryDeletedDesc') });
+    },
+    onError: (error) => {
+      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
+    },
+  });
+
   return {
     timeEntries,
     isLoading,
     createTimeEntry: createTimeEntry.mutate,
-    updateTimeEntry: updateTimeEntry.mutate,
+    updateTimeEntry: updateTimeEntryStatus.mutate,
+    editTimeEntry: editTimeEntry.mutate,
+    deleteTimeEntry: deleteTimeEntry.mutate,
   };
 }

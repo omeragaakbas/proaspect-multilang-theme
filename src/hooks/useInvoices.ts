@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from 'react-i18next';
 
 export type InvoiceStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'SENT' | 'VIEWED' | 'PAID' | 'OVERDUE' | 'CANCELLED';
 
@@ -41,6 +42,7 @@ export interface Invoice {
 }
 
 export function useInvoices() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { userRole } = useAuth();
@@ -128,7 +130,7 @@ export function useInvoices() {
     },
     onError: (error) => {
       toast({
-        title: 'Fout',
+        title: t('common.error'),
         description: error.message,
         variant: 'destructive',
       });
@@ -238,7 +240,7 @@ export function useInvoices() {
     },
     onError: (error) => {
       toast({
-        title: 'Fout',
+        title: t('common.error'),
         description: error.message,
         variant: 'destructive',
       });
@@ -277,7 +279,7 @@ export function useInvoices() {
     },
     onError: (error) => {
       toast({
-        title: 'Fout',
+        title: t('common.error'),
         description: error.message,
         variant: 'destructive',
       });
@@ -319,7 +321,7 @@ export function useInvoices() {
     },
     onError: (error) => {
       toast({
-        title: 'Fout',
+        title: t('common.error'),
         description: error.message,
         variant: 'destructive',
       });
@@ -358,7 +360,7 @@ export function useInvoices() {
     },
     onError: (error) => {
       toast({
-        title: 'Fout',
+        title: t('common.error'),
         description: error.message,
         variant: 'destructive',
       });
@@ -396,10 +398,105 @@ export function useInvoices() {
     },
     onError: (error) => {
       toast({
-        title: 'Fout',
+        title: t('common.error'),
         description: error.message,
         variant: 'destructive',
       });
+    },
+  });
+
+  const updateInvoice = useMutation({
+    mutationFn: async (params: {
+      id: string;
+      client_id?: string;
+      issue_date?: string;
+      due_date?: string;
+      vat_rate?: number;
+      notes?: string;
+    }) => {
+      const updates: any = {};
+      if (params.client_id !== undefined) updates.client_id = params.client_id;
+      if (params.issue_date !== undefined) updates.issue_date = params.issue_date;
+      if (params.due_date !== undefined) updates.due_date = params.due_date;
+      if (params.vat_rate !== undefined) updates.vat_rate = params.vat_rate;
+      if (params.notes !== undefined) updates.notes = params.notes;
+
+      const { data, error } = await supabase
+        .from('invoices')
+        .update(updates)
+        .eq('id', params.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast({ title: t('invoices.updated'), description: t('invoices.updatedDesc') });
+    },
+    onError: (error) => {
+      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const deleteInvoice = useMutation({
+    mutationFn: async (invoiceId: string) => {
+      const { error: lineItemsError } = await supabase
+        .from('invoice_line_items')
+        .delete()
+        .eq('invoice_id', invoiceId);
+
+      if (lineItemsError) throw lineItemsError;
+
+      const { error } = await supabase
+        .from('invoices')
+        .delete()
+        .eq('id', invoiceId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast({ title: t('invoices.deleted'), description: t('invoices.deletedDesc') });
+    },
+    onError: (error) => {
+      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const markAsPaid = useMutation({
+    mutationFn: async (invoiceId: string) => {
+      const { data, error } = await supabase
+        .from('invoices')
+        .update({
+          status: 'PAID',
+          paid_at: new Date().toISOString(),
+        })
+        .eq('id', invoiceId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await supabase.from('notifications').insert({
+        user_id: data.contractor_id,
+        title: 'Factuur betaald',
+        message: `Factuur ${data.invoice_number} is als betaald gemarkeerd.`,
+        type: 'INVOICE_PAID',
+        action_url: `/dashboard/invoices`,
+        metadata: { invoice_id: invoiceId },
+      });
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      toast({ title: t('invoices.markedAsPaid'), description: t('invoices.markedAsPaidDesc') });
+    },
+    onError: (error) => {
+      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -413,5 +510,8 @@ export function useInvoices() {
     approveInvoice: approveInvoice.mutate,
     rejectInvoice: rejectInvoice.mutate,
     sendInvoice: sendInvoice.mutate,
+    updateInvoice: updateInvoice.mutate,
+    deleteInvoice: deleteInvoice.mutate,
+    markAsPaid: markAsPaid.mutate,
   };
 }

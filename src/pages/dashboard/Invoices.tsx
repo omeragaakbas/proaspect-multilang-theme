@@ -28,6 +28,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Separator } from '@/components/ui/separator';
+import {
   Plus,
   Search,
   FileText,
@@ -43,7 +54,9 @@ import {
   CalendarIcon,
   XCircle,
   ArrowUpRight,
-  User
+  User,
+  Trash2,
+  CreditCard,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -73,6 +86,9 @@ const Invoices = () => {
     approveInvoice,
     rejectInvoice,
     sendInvoice,
+  updateInvoice,
+    deleteInvoice,
+    markAsPaid,
   } = useInvoices();
   const { clients } = useClients();
   const { timeEntries } = useTimeEntries();
@@ -84,6 +100,12 @@ const Invoices = () => {
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [rejectingInvoiceId, setRejectingInvoiceId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [viewingInvoice, setViewingInvoice] = useState<typeof invoices[0] | null>(null);
+  const [editingInvoice, setEditingInvoice] = useState<typeof invoices[0] | null>(null);
+  const [deletingInvoiceId, setDeletingInvoiceId] = useState<string | null>(null);
+  const [editClientId, setEditClientId] = useState('');
+  const [editVatRate, setEditVatRate] = useState('21');
+  const [editNotes, setEditNotes] = useState('');
 
   const [selectedClient, setSelectedClient] = useState('');
   const [issueDate, setIssueDate] = useState<Date>(new Date());
@@ -547,11 +569,33 @@ const Invoices = () => {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setViewingInvoice(invoice)}>
                                   <Eye className="mr-2 h-4 w-4" />
                                   {t('common.view')}
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => {
+                                  const printWindow = window.open('', '_blank');
+                                  if (!printWindow) return;
+                                  printWindow.document.write(`
+                                    <html><head><title>${invoice.invoice_number}</title>
+                                    <style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;padding:20px}
+                                    h1{color:#333}table{width:100%;border-collapse:collapse;margin-top:20px}
+                                    th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f5f5f5}
+                                    .total{font-weight:bold;font-size:1.2em}.header{display:flex;justify-content:space-between}
+                                    @media print{body{margin:0}}</style></head><body>
+                                    <div class="header"><div><h1>${invoice.invoice_number}</h1>
+                                    <p>${clientName}</p></div>
+                                    <div><p>${t('invoices.issueDate')}: ${format(new Date(invoice.issue_date), 'd MMM yyyy', { locale: dateLocale })}</p>
+                                    <p>${t('invoices.dueDate')}: ${format(new Date(invoice.due_date), 'd MMM yyyy', { locale: dateLocale })}</p></div></div>
+                                    <hr/><p class="total">${t('common.total')}: ${formatCurrency(invoice.total_cents)}</p>
+                                    <p>BTW ${invoice.vat_rate}%: ${formatCurrency(invoice.vat_amount_cents)}</p>
+                                    <p>${t('invoices.subtotal')}: ${formatCurrency(invoice.subtotal_cents)}</p>
+                                    ${invoice.notes ? `<p><strong>${t('invoices.notes')}:</strong> ${invoice.notes}</p>` : ''}
+                                    </body></html>
+                                  `);
+                                  printWindow.document.close();
+                                  printWindow.print();
+                                }}>
                                   <Download className="mr-2 h-4 w-4" />
                                   {t('common.downloadPdf')}
                                 </DropdownMenuItem>
@@ -567,7 +611,12 @@ const Invoices = () => {
                                 )}
 
                                 {!isAdmin && (invoice.status === 'DRAFT' || invoice.status === 'REJECTED') && (
-                                  <DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => {
+                                    setEditingInvoice(invoice);
+                                    setEditClientId(invoice.client_id);
+                                    setEditVatRate(String(invoice.vat_rate));
+                                    setEditNotes(invoice.notes || '');
+                                  }}>
                                     <Edit className="mr-2 h-4 w-4" />
                                     {t('common.edit')}
                                   </DropdownMenuItem>
@@ -607,10 +656,35 @@ const Invoices = () => {
                                 )}
 
                                 {isAdmin && (invoice.status === 'DRAFT' || invoice.status === 'REJECTED') && (
-                                  <DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => {
+                                    setEditingInvoice(invoice);
+                                    setEditClientId(invoice.client_id);
+                                    setEditVatRate(String(invoice.vat_rate));
+                                    setEditNotes(invoice.notes || '');
+                                  }}>
                                     <Edit className="mr-2 h-4 w-4" />
                                     {t('common.edit')}
                                   </DropdownMenuItem>
+                                )}
+
+                                {isAdmin && ['SENT', 'VIEWED'].includes(invoice.status) && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => markAsPaid(invoice.id)} className="text-green-600">
+                                      <CreditCard className="mr-2 h-4 w-4" />
+                                      {t('invoices.markAsPaid')}
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+
+                                {invoice.status === 'DRAFT' && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => setDeletingInvoiceId(invoice.id)} className="text-red-600">
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      {t('common.delete')}
+                                    </DropdownMenuItem>
+                                  </>
                                 )}
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -646,9 +720,7 @@ const Invoices = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('invoices.reject')}</DialogTitle>
-            <DialogDescription>
-              {t('invoices.rejectReason')}
-            </DialogDescription>
+            <DialogDescription>{t('invoices.rejectReason')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Textarea
@@ -658,14 +730,8 @@ const Invoices = () => {
               rows={4}
             />
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setShowRejectDialog(false)}>
-                {t('common.cancel')}
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleReject}
-                disabled={!rejectionReason.trim()}
-              >
+              <Button variant="outline" onClick={() => setShowRejectDialog(false)}>{t('common.cancel')}</Button>
+              <Button variant="destructive" onClick={handleReject} disabled={!rejectionReason.trim()}>
                 <XCircle className="h-4 w-4 mr-2" />
                 {t('invoices.reject')}
               </Button>
@@ -673,6 +739,146 @@ const Invoices = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!viewingInvoice} onOpenChange={(open) => !open && setViewingInvoice(null)}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{viewingInvoice?.invoice_number}</DialogTitle>
+            <DialogDescription>{viewingInvoice?.client ? getClientName(viewingInvoice.client.name_i18n) : ''}</DialogDescription>
+          </DialogHeader>
+          {viewingInvoice && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-muted-foreground">{t('invoices.status')}</div>
+                  <Badge variant={getStatusColor(viewingInvoice.status)} className="gap-1 mt-1">
+                    {getStatusIcon(viewingInvoice.status)}
+                    {getStatusText(viewingInvoice.status)}
+                  </Badge>
+                </div>
+                <div>
+                  <div className="text-sm text-muted-foreground">{t('common.total')}</div>
+                  <div className="text-xl font-bold">{formatCurrency(viewingInvoice.total_cents)}</div>
+                </div>
+              </div>
+              <Separator />
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <div className="text-muted-foreground">{t('invoices.issueDate')}</div>
+                  <div>{format(new Date(viewingInvoice.issue_date), 'd MMM yyyy', { locale: dateLocale })}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">{t('invoices.dueDate')}</div>
+                  <div>{format(new Date(viewingInvoice.due_date), 'd MMM yyyy', { locale: dateLocale })}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">{t('invoices.subtotal')}</div>
+                  <div>{formatCurrency(viewingInvoice.subtotal_cents)}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">BTW ({viewingInvoice.vat_rate}%)</div>
+                  <div>{formatCurrency(viewingInvoice.vat_amount_cents)}</div>
+                </div>
+              </div>
+              {viewingInvoice.notes && (
+                <>
+                  <Separator />
+                  <div>
+                    <div className="text-sm text-muted-foreground mb-1">{t('invoices.notes')}</div>
+                    <p className="text-sm">{viewingInvoice.notes}</p>
+                  </div>
+                </>
+              )}
+              {viewingInvoice.rejection_reason && (
+                <>
+                  <Separator />
+                  <div>
+                    <div className="text-sm text-muted-foreground mb-1">{t('invoices.rejectionReason')}</div>
+                    <p className="text-sm text-destructive">{viewingInvoice.rejection_reason}</p>
+                  </div>
+                </>
+              )}
+              {viewingInvoice.contractor && (
+                <>
+                  <Separator />
+                  <div className="text-sm">
+                    <div className="text-muted-foreground">{t('invoices.contractor')}</div>
+                    <div>{viewingInvoice.contractor.name} ({viewingInvoice.contractor.email})</div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editingInvoice} onOpenChange={(open) => !open && setEditingInvoice(null)}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>{t('invoices.editInvoice')}</DialogTitle>
+            <DialogDescription>{editingInvoice?.invoice_number}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t('invoices.client')}</Label>
+              <Select value={editClientId} onValueChange={setEditClientId}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>{getClientName(client.name_i18n)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{t('invoices.vatRate')}</Label>
+              <Select value={editVatRate} onValueChange={setEditVatRate}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">0%</SelectItem>
+                  <SelectItem value="9">9%</SelectItem>
+                  <SelectItem value="21">21%</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{t('invoices.notes')}</Label>
+              <Textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} rows={3} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingInvoice(null)}>{t('common.cancel')}</Button>
+            <Button onClick={() => {
+              if (!editingInvoice) return;
+              updateInvoice({
+                id: editingInvoice.id,
+                client_id: editClientId,
+                vat_rate: parseFloat(editVatRate),
+                notes: editNotes,
+              });
+              setEditingInvoice(null);
+            }}>{t('common.save')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deletingInvoiceId} onOpenChange={(open) => !open && setDeletingInvoiceId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('invoices.deleteInvoice')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('invoices.deleteInvoiceConfirm')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (deletingInvoiceId) {
+                deleteInvoice(deletingInvoiceId);
+                setDeletingInvoiceId(null);
+              }
+            }}>{t('common.delete')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
